@@ -10,6 +10,7 @@ engine = create_async_engine(
     echo=False,
     future=True,
     pool_pre_ping=True,
+    connect_args={"prepare_threshold": 0} if "psycopg" in settings.async_database_url else {},
 )
 
 async_session_factory = async_sessionmaker(

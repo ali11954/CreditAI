@@ -126,11 +126,13 @@ export default function DashboardPage() {
           title="تحليل الائتمان"
           titleEn="Credit Analysis"
           type="area"
+          endpoint="/dashboards/chart/credit-analysis"
         />
         <ChartCard
           title="المحصلة الشهرية"
           titleEn="Monthly Collections"
           type="bar"
+          endpoint="/dashboards/chart/collections"
         />
       </div>
 

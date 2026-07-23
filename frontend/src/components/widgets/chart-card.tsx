@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
+import api from '@/lib/api';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -10,6 +12,7 @@ interface ChartCardProps {
   titleEn?: string;
   type?: 'line' | 'area' | 'bar';
   className?: string;
+  endpoint?: string;
 }
 
 export function ChartCard({
@@ -17,7 +20,29 @@ export function ChartCard({
   titleEn,
   type = 'area',
   className,
+  endpoint,
 }: ChartCardProps) {
+  const [chartData, setChartData] = useState<{ categories: string[]; values: number[] }>({
+    categories: [],
+    values: [],
+  });
+
+  useEffect(() => {
+    if (!endpoint) return;
+    const fetchData = async () => {
+      try {
+        const res = await api.get(endpoint);
+        setChartData({
+          categories: res.data.categories || [],
+          values: res.data.values || [],
+        });
+      } catch {
+        setChartData({ categories: [], values: [] });
+      }
+    };
+    fetchData();
+  }, [endpoint]);
+
   const options = {
     chart: {
       id: 'basic-chart',
@@ -25,9 +50,9 @@ export function ChartCard({
       fontFamily: 'IBM Plex Sans Arabic, sans-serif',
     },
     xaxis: {
-      categories: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو'],
+      categories: chartData.categories.length > 0 ? chartData.categories : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو'],
     },
-    colors: ['#3b82f6'],
+    colors: [type === 'bar' ? '#3b82f6' : '#22c55e'],
     fill: {
       type: 'gradient',
       gradient: {
@@ -40,8 +65,8 @@ export function ChartCard({
 
   const series = [
     {
-      name: 'القيمة',
-      data: [30, 40, 35, 50, 49, 60, 70],
+      name: title,
+      data: chartData.values.length > 0 ? chartData.values : [],
     },
   ];
 
@@ -51,7 +76,13 @@ export function ChartCard({
         <CardTitle className="font-arabic">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Chart options={options} series={series} type={type} height={300} />
+        {chartData.values.length === 0 && !endpoint ? (
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground font-arabic">
+            لا توجد بيانات
+          </div>
+        ) : (
+          <Chart options={options} series={series} type={type} height={300} />
+        )}
       </CardContent>
     </Card>
   );

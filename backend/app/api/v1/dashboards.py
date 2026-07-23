@@ -224,6 +224,69 @@ async def dashboard_alerts(
     return alerts
 
 
+@router.get("/chart/credit-analysis")
+async def chart_credit_analysis(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("dashboards:read"))
+):
+    now = datetime.utcnow()
+    months = []
+    values = []
+    for i in range(6, -1, -1):
+        month_date = now - timedelta(days=i * 30)
+        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if i > 0:
+            next_month = (month_start + timedelta(days=32)).replace(day=1)
+        else:
+            next_month = now + timedelta(days=1)
+
+        count = (await db.execute(
+            select(func.count()).select_from(CreditApplication).where(
+                CreditApplication.is_active == True,
+                CreditApplication.created_at >= month_start,
+                CreditApplication.created_at < next_month
+            )
+        )).scalar() or 0
+
+        month_names = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+        months.append(month_names[month_date.month - 1])
+        values.append(count)
+
+    return {"categories": months, "values": values}
+
+
+@router.get("/chart/collections")
+async def chart_collections(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("dashboards:read"))
+):
+    now = datetime.utcnow()
+    months = []
+    values = []
+    for i in range(6, -1, -1):
+        month_date = now - timedelta(days=i * 30)
+        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if i > 0:
+            next_month = (month_start + timedelta(days=32)).replace(day=1)
+        else:
+            next_month = now + timedelta(days=1)
+
+        result = await db.execute(
+            select(func.coalesce(func.sum(SalesInvoice.paid_amount), 0)).where(
+                SalesInvoice.is_active == True,
+                SalesInvoice.created_at >= month_start,
+                SalesInvoice.created_at < next_month
+            )
+        )
+        total = float(result.scalar() or 0)
+
+        month_names = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+        months.append(month_names[month_date.month - 1])
+        values.append(total)
+
+    return {"categories": months, "values": values}
+
+
 @router.get("/summary")
 async def dashboard_summary(
     db: AsyncSession = Depends(get_db),
