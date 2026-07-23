@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: creditai-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: creditai-db
+          property: connectionString
+      - key: REDIS_URL
+        value: redis://localhost:6379
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: '["https://creditai-frontend.onrender.com"]'
+      - key: PYTHON_VERSION
+        value: "3.11"
+    healthCheckPath: /health
+    autoDeploy: true
+
+  - type: web
+    name: creditai-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://creditai-backend.onrender.com
+      - key: NODE_VERSION
+        value: "20"
+    autoDeploy: true
+
+  - type: pgsql
+    name: creditai-db
+    plan: free
+    databaseName: creditai
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all

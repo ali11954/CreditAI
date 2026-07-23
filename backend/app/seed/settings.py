@@ -1,0 +1,25 @@
+from typing import List, Dict, Any
+
+DEFAULT_SETTINGS: List[Dict[str, Any]] = [
+    {"key": "company.name", "value": "CreditAI Enterprise", "value_type": "string", "description": "Company name", "module": "general"},
+    {"key": "company.name_ar", "value": "كريدي آي للمؤسسات", "value_type": "string", "description": "Company name in Arabic", "module": "general"},
+    {"key": "credit.max_limit", "value": "10000000", "value_type": "number", "description": "Maximum credit limit", "module": "credit"},
+    {"key": "credit.auto_approve_threshold", "value": "100000", "value_type": "number", "description": "Auto-approve threshold", "module": "credit"},
+    {"key": "collection.reminder_days", "value": "7", "value_type": "number", "description": "Days before due date to send reminder", "module": "collections"},
+    {"key": "collection.overdue_threshold", "value": "30", "value_type": "number", "description": "Days overdue to escalate", "module": "collections"},
+    {"key": "compliance.kyc_expiry_days", "value": "365", "value_type": "number", "description": "KYC document expiry in days", "module": "compliance"},
+    {"key": "compliance.aml_check_required", "value": "true", "value_type": "boolean", "description": "Require AML check for new customers", "module": "compliance"},
+    {"key": "legal.case_escalation_days", "value": "60", "value_type": "number", "description": "Days to escalate to legal", "module": "legal"},
+    {"key": "ai.enabled", "value": "true", "value_type": "boolean", "description": "Enable AI features", "module": "ai"},
+    {"key": "sap.sync_enabled", "value": "false", "value_type": "boolean", "description": "Enable SAP sync", "module": "sap"},
+    {"key": "notifications.email_enabled", "value": "true", "value_type": "boolean", "description": "Enable email notifications", "module": "notifications"},
+    {"key": "notifications.sms_enabled", "value": "false", "value_type": "boolean", "description": "Enable SMS notifications", "module": "notifications"},
+    {"key": "reports.auto_generate", "value": "true", "value_type": "boolean", "description": "Auto-generate reports", "module": "reports"},
+    {"key": "security.password_min_length", "value": "8", "value_type": "number", "description": "Minimum password length", "module": "security"},
+    {"key": "security.session_timeout", "value": "30", "value_type": "number", "description": "Session timeout in minutes", "module": "security"},
+    {"key": "security.max_login_attempts", "value": "5", "value_type": "number", "description": "Max login attempts before lockout", "module": "security"},
+    {"key": "currency.base_currency", "value": "SAR", "value_type": "string", "description": "Base currency code", "module": "finance"},
+    {"key": "fiscal_year.start_month", "value": "1", "value_type": "number", "description": "Fiscal year start month", "module": "finance"},
+    {"key": "ui.language", "value": "en", "value_type": "string", "description": "Default UI language", "module": "ui"},
+    {"key": "ui.theme", "value": "light", "value_type": "string", "description": "UI theme", "module": "ui"},
+]
