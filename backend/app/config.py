@@ -45,17 +45,19 @@ class Settings(BaseSettings):
 
     @property
     def async_database_url(self) -> str:
-        """
-        SQLAlchemy Async Engine
-        يستخدم asyncpg مباشرة
-        """
         url = self.DATABASE_URL
 
-        # حماية من أخطاء إعدادات قديمة
         if url.startswith("postgresql://"):
             url = url.replace(
                 "postgresql://",
+                "postgresql+psycopg://",
+                1
+            )
+
+        if "supabase" in url and "psycopg" not in url:
+            url = url.replace(
                 "postgresql+asyncpg://",
+                "postgresql+psycopg://",
                 1
             )
 
