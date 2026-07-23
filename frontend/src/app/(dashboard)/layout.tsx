@@ -6,7 +6,6 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { Breadcrumbs } from '@/components/layout/breadcrumbs';
 import { authService } from '@/lib/auth';
-import api from '@/lib/api';
 
 export default function DashboardLayout({
   children,
@@ -21,16 +20,7 @@ export default function DashboardLayout({
     const checkAuth = async () => {
       const token = authService.getToken();
       if (!token) {
-        try {
-          const res = await api.get('/users', { params: { page: 1, page_size: 1 } });
-          if (res.data && res.data.total > 0) {
-            router.replace('/login');
-            return;
-          }
-          setIsAuthenticated(true);
-        } catch {
-          setIsAuthenticated(true);
-        }
+        router.replace('/login');
         return;
       }
       setIsAuthenticated(true);

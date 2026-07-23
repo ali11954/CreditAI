@@ -26,4 +26,6 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         sync: false
+      - key: BACKEND_URL
+        value: https://creditai-backend-477s.onrender.com
     autoDeploy: true
