@@ -47,19 +47,9 @@ class Settings(BaseSettings):
     def async_database_url(self) -> str:
         url = self.DATABASE_URL
 
-        if url.startswith("postgresql://"):
-            url = url.replace(
-                "postgresql://",
-                "postgresql+psycopg://",
-                1
-            )
-
-        if "supabase" in url and "psycopg" not in url:
-            url = url.replace(
-                "postgresql+asyncpg://",
-                "postgresql+psycopg://",
-                1
-            )
+        # Always use psycopg — compatible with pgbouncer on Supabase/Render
+        url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+        url = url.replace("postgresql://", "postgresql+psycopg://")
 
         return url
 
