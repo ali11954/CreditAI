@@ -19,6 +19,22 @@ class Settings(BaseSettings):
         default="postgresql://postgres:postgres@localhost:5432/creditai",
         env="DATABASE_URL_SYNC"
     )
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.DATABASE_URL
+        if "pooler.supabase.com" in url:
+            url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+            url = url.replace("postgresql://", "postgresql+psycopg://")
+            if "?" in url:
+                url += "&prepared_statement_cache_size=0"
+            else:
+                url += "?prepared_statement_cache_size=0"
+        return url
+    DATABASE_URL_SYNC: str = Field(
+        default="postgresql://postgres:postgres@localhost:5432/creditai",
+        env="DATABASE_URL_SYNC"
+    )
     
     REDIS_URL: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
     
