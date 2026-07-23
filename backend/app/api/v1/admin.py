@@ -7,12 +7,12 @@ router = APIRouter()
 
 
 @router.post("/seed-database")
-async def seed_database(db: AsyncSession = Depends(get_db)):
+async def seed_database(force: bool = False, db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(text("SELECT count(*) FROM users"))
         user_count = result.scalar()
-        if user_count and user_count > 0:
-            return {"message": "Database already has users", "count": user_count}
+        if user_count and user_count > 0 and not force:
+            return {"message": "Database already has users. Use ?force=true to update password.", "count": user_count}
 
         await db.execute(text("""
             INSERT INTO roles (id, name, name_ar, description, is_system, permissions, is_active, created_at, updated_at)
@@ -25,7 +25,7 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
             VALUES ('06e5bbd3-66fc-4df5-8784-cc38447fa31a', 'admin@creditai.com', 'admin', 'System Administrator', 'مسؤول النظام',
                     '$2b$12$GygHfz/94f5Kp875MD1yTO8ZbAcizXE/yhF/XOakscR65wLmErXXW',
                     true, true, false, 0, '{}'::jsonb, now(), now())
-            ON CONFLICT (email) DO UPDATE SET password_hash = '$2b$12$GygHfz/94f5Kp875MD1yTO8ZbAcizXE/yhF/XOakscR65wLmErXXW'
+            ON CONFLICT (email) DO UPDATE SET password_hash = '$2b$12$GygHfz/94f5Kp875MD1yTO8ZbAcizXE/yhF/XOakscR65wLmErXXW', is_active = true, is_superuser = true
         """))
 
         await db.execute(text("""
