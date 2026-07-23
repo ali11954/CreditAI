@@ -64,10 +64,13 @@ async def root():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    print(f"UNHANDLED ERROR: {type(exc).__name__}: {exc}")
+    print(traceback.format_exc())
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "Internal server error",
+            "detail": str(exc),
             "error_code": "INTERNAL_ERROR"
         }
     )
