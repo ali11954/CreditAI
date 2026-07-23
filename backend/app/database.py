@@ -1,22 +1,28 @@
-import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncGenerator
 
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
+
 from app.config import settings
+
 
 engine = create_async_engine(
     settings.async_database_url,
     echo=False,
-    future=True,
     pool_pre_ping=True,
-    connect_args={"prepare_threshold": 0} if "psycopg" in settings.async_database_url else {},
+    pool_recycle=300,
+    pool_size=5,
+    max_overflow=10,
 )
 
 async_session_factory = async_sessionmaker(
-    engine,
+    bind=engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=False,
 )
 
 
@@ -32,13 +38,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
 async def create_tables():
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except Exception:
-        pass
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
