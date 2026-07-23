@@ -23,9 +23,9 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
         await db.execute(text("""
             INSERT INTO users (id, email, username, full_name, full_name_ar, password_hash, is_active, is_superuser, mfa_enabled, failed_login_attempts, preferences, created_at, updated_at)
             VALUES ('06e5bbd3-66fc-4df5-8784-cc38447fa31a', 'admin@creditai.com', 'admin', 'System Administrator', 'مسؤول النظام',
-                    '$2b$12$kbhhRJ2fE3H67z3qZj9oJOGA8ZfuAXQPY9MHCcRfsZ2NDN.V4I2Iq',
+                    '$2b$12$GygHfz/94f5Kp875MD1yTO8ZbAcizXE/yhF/XOakscR65wLmErXXW',
                     true, true, false, 0, '{}'::jsonb, now(), now())
-            ON CONFLICT (email) DO NOTHING
+            ON CONFLICT (email) DO UPDATE SET password_hash = '$2b$12$GygHfz/94f5Kp875MD1yTO8ZbAcizXE/yhF/XOakscR65wLmErXXW'
         """))
 
         await db.execute(text("""
