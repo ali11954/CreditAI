@@ -5,11 +5,12 @@ from app.api.v1 import (
     credit_analysis, credit_committee, credit_limits, collateral,
     guarantors, insurance, exposure, collections, legal, documents,
     workflow, ai, communications, reports, sap, audit, settings,
-    notifications, dashboards, export, upload, currencies, sales
+    notifications, dashboards, export, upload, currencies, sales, admin
 )
 
 api_router = APIRouter()
 
+api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["Users"])
 api_router.include_router(roles.router, prefix="/roles", tags=["Roles"])
