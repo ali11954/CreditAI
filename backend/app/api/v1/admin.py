@@ -35,7 +35,7 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
         """))
 
         await db.execute(text("""
-            INSERT INTO currencies (id, code, name, name_ar, symbol, is_default, exchange_rate, is_active, created_at, updated_at)
+            INSERT INTO currencies (id, code, name, name_ar, symbol, is_base, exchange_rate, is_active, created_at, updated_at)
             VALUES
             ('fb9444bd-8793-4f90-875e-72f422d6885b', 'YER_N', 'Yemeni Rial (North)', 'ريال يمني شمالي', '﷼', true, 1.000000, true, now(), now()),
             ('f4c1ddfb-290b-42d2-8ab2-e17240b1ec51', 'YER_S', 'Yemeni Rial (South)', 'ريال يمني جنوبي', '﷼', false, 3.000000, true, now(), now()),
