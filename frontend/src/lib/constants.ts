@@ -1,8 +1,7 @@
 export const APP_NAME = 'CreditAI Enterprise';
 export const APP_NAME_AR = 'كريدي آيenterprise';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-export const API_URL = baseUrl.endsWith('/api/v1') ? baseUrl : `${baseUrl.replace(/\/+$/, '')}/api/v1`;
+export const API_URL = '/api/v1';
 
 export const LOCALES = [
   { code: 'ar', name: 'العربية', flag: '🇮🇱' },
