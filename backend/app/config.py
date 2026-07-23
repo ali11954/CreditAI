@@ -26,10 +26,6 @@ class Settings(BaseSettings):
         if "pooler.supabase.com" in url:
             url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
             url = url.replace("postgresql://", "postgresql+psycopg://")
-            if "?" in url:
-                url += "&prepared_statement_cache_size=0"
-            else:
-                url += "?prepared_statement_cache_size=0"
         return url
     DATABASE_URL_SYNC: str = Field(
         default="postgresql://postgres:postgres@localhost:5432/creditai",

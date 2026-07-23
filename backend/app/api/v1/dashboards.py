@@ -92,6 +92,138 @@ class WidgetResponse(BaseModel):
 router = APIRouter()
 
 
+@router.get("/recent-activity")
+async def recent_activity(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("dashboards:read"))
+):
+    from app.models.document import Document
+    from app.models.legal import LegalCase
+
+    activities = []
+
+    recent_apps = (await db.execute(
+        select(CreditApplication)
+        .where(CreditApplication.is_active == True)
+        .order_by(CreditApplication.created_at.desc())
+        .limit(5)
+    )).scalars().all()
+
+    for app in recent_apps:
+        customer = (await db.execute(
+            select(Customer).where(Customer.id == app.customer_id)
+        )).scalar_one_or_none()
+        status_map = {
+            'draft': ('أنشأ طلب ائتمان', 'warning'),
+            'submitted': ('أرسل طلب ائتمان', 'info'),
+            'approved': ('وافق على طلب ائتمان', 'success'),
+            'rejected': ('رفض طلب ائتمان', 'destructive'),
+        }
+        action, badge_type = status_map.get(app.status, ('تحديث طلب ائتمان', 'secondary'))
+        activities.append({
+            "id": str(app.id),
+            "user_name": "النظام",
+            "action": action,
+            "entity": customer.name if customer else "عميل",
+            "entity_type": badge_type,
+            "time": app.created_at.strftime("%Y-%m-%d %H:%M") if app.created_at else "",
+            "type": "info",
+        })
+
+    recent_customers = (await db.execute(
+        select(Customer)
+        .where(Customer.is_active == True)
+        .order_by(Customer.created_at.desc())
+        .limit(3)
+    )).scalars().all()
+
+    for cust in recent_customers:
+        activities.append({
+            "id": str(cust.id),
+            "user_name": "النظام",
+            "action": "أضاف عميل جديد",
+            "entity": cust.name or cust.name_ar or "عميل",
+            "entity_type": "success",
+            "time": cust.created_at.strftime("%Y-%m-%d %H:%M") if cust.created_at else "",
+            "type": "info",
+        })
+
+    recent_sales = (await db.execute(
+        select(SalesInvoice)
+        .where(SalesInvoice.is_active == True)
+        .order_by(SalesInvoice.created_at.desc())
+        .limit(3)
+    )).scalars().all()
+
+    for inv in recent_sales:
+        activities.append({
+            "id": str(inv.id),
+            "user_name": "النظام",
+            "action": "فاتورة مبيعات جديدة",
+            "entity": inv.invoice_number or "فاتورة",
+            "entity_type": "secondary",
+            "time": inv.created_at.strftime("%Y-%m-%d %H:%M") if inv.created_at else "",
+            "type": "info",
+        })
+
+    activities.sort(key=lambda x: x.get("time", ""), reverse=True)
+    return activities[:10]
+
+
+@router.get("/alerts")
+async def dashboard_alerts(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("dashboards:read"))
+):
+    now = datetime.utcnow()
+    alerts = []
+
+    pending_apps = (await db.execute(
+        select(func.count()).select_from(CreditApplication).where(
+            CreditApplication.is_active == True,
+            CreditApplication.status.in_(["draft", "submitted", "pending"])
+        )
+    )).scalar() or 0
+
+    if pending_apps > 0:
+        alerts.append({
+            "id": "pending-apps",
+            "title": "طلبات ائتمان تنتظر المراجعة",
+            "description": f"{pending_apps} طلب(ات) تحتاج مراجعة",
+            "type": "warning",
+        })
+
+    overdue = (await db.execute(
+        select(func.count()).select_from(SalesInvoice).where(
+            SalesInvoice.is_active == True,
+            SalesInvoice.due_date < now,
+            SalesInvoice.balance > 0
+        )
+    )).scalar() or 0
+
+    if overdue > 0:
+        alerts.append({
+            "id": "overdue-invoices",
+            "title": "فواتير متأخرة",
+            "description": f"{overdue} فاتورة(ات) تجاوزت موعد الدفع",
+            "type": "destructive",
+        })
+
+    total_customers = (await db.execute(
+        select(func.count()).select_from(Customer).where(Customer.is_active == True)
+    )).scalar() or 0
+
+    if total_customers == 0:
+        alerts.append({
+            "id": "no-customers",
+            "title": "لا يوجد عملاء",
+            "description": "لم يتم إضافة أي عميل بعد",
+            "type": "info",
+        })
+
+    return alerts
+
+
 @router.get("/summary")
 async def dashboard_summary(
     db: AsyncSession = Depends(get_db),
@@ -436,159 +568,3 @@ async def delete_widget(
     widget.is_active = False
     await db.flush()
     return {"message": "Widget deleted successfully"}
-
-
-@router.get("/data/{widget_type}")
-async def get_widget_data(
-    widget_type: str,
-    params: dict = {},
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("dashboards:read"))
-):
-    return {
-        "widget_type": widget_type,
-        "data": {},
-        "message": f"Data for widget type '{widget_type}'"
-    }
-
-
-@router.get("/summary")
-async def dashboard_summary(
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("dashboards:read"))
-):
-    now = datetime.utcnow()
-    thirty_days_ago = now - timedelta(days=30)
-    sixty_days_ago = now - timedelta(days=60)
-
-    customers_total = (await db.execute(
-        select(func.count()).select_from(Customer).where(Customer.is_active == True)
-    )).scalar() or 0
-
-    customers_prev = (await db.execute(
-        select(func.count()).select_from(Customer).where(
-            Customer.is_active == True, Customer.created_at >= sixty_days_ago, Customer.created_at < thirty_days_ago
-        )
-    )).scalar() or 0
-
-    customers_new = (await db.execute(
-        select(func.count()).select_from(Customer).where(
-            Customer.is_active == True, Customer.created_at >= thirty_days_ago
-        )
-    )).scalar() or 0
-
-    apps_total = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(CreditApplication.is_active == True)
-    )).scalar() or 0
-
-    apps_prev = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(
-            CreditApplication.is_active == True,
-            CreditApplication.created_at >= sixty_days_ago,
-            CreditApplication.created_at < thirty_days_ago
-        )
-    )).scalar() or 0
-
-    apps_new = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(
-            CreditApplication.is_active == True, CreditApplication.created_at >= thirty_days_ago
-        )
-    )).scalar() or 0
-
-    exposure_result = await db.execute(
-        select(
-            func.coalesce(func.sum(SalesInvoice.balance), 0),
-        ).where(SalesInvoice.is_active == True)
-    )
-    total_exposure = float(exposure_result.scalar() or 0)
-
-    exposure_prev_result = await db.execute(
-        select(func.coalesce(func.sum(SalesInvoice.balance), 0)).where(
-            SalesInvoice.is_active == True,
-            SalesInvoice.created_at >= sixty_days_ago,
-            SalesInvoice.created_at < thirty_days_ago
-        )
-    )
-    exposure_prev = float(exposure_prev_result.scalar() or 0)
-
-    approved = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(
-            CreditApplication.is_active == True, CreditApplication.status == "approved"
-        )
-    )).scalar() or 0
-
-    approval_rate = round((approved / apps_total * 100), 1) if apps_total > 0 else 0
-
-    approval_prev = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(
-            CreditApplication.is_active == True,
-            CreditApplication.status == "approved",
-            CreditApplication.created_at >= sixty_days_ago,
-            CreditApplication.created_at < thirty_days_ago
-        )
-    )).scalar() or 0
-    apps_prev_count = apps_prev if apps_prev > 0 else 1
-    approval_rate_prev = round((approval_prev / apps_prev_count * 100), 1) if apps_prev_count > 0 else 0
-
-    overdue_result = await db.execute(
-        select(func.count()).select_from(SalesInvoice).where(
-            SalesInvoice.is_active == True,
-            SalesInvoice.due_date < now,
-            SalesInvoice.balance > 0
-        )
-    )
-    overdue_count = overdue_result.scalar() or 0
-
-    pending_apps = (await db.execute(
-        select(func.count()).select_from(CreditApplication).where(
-            CreditApplication.is_active == True,
-            CreditApplication.status.in_(["draft", "submitted", "pending"])
-        )
-    )).scalar() or 0
-
-    def calc_change(current: float, previous: float) -> dict:
-        if previous == 0:
-            pct = 100.0 if current > 0 else 0.0
-        else:
-            pct = round(((current - previous) / previous) * 100, 1)
-        return {
-            "value": f"+{pct}%" if pct >= 0 else f"{pct}%",
-            "type": "positive" if pct >= 0 else "negative"
-        }
-
-    customer_change = calc_change(customers_new, customers_prev)
-    apps_change = calc_change(apps_new, apps_prev)
-
-    return {
-        "stats": {
-            "customers": {
-                "value": customers_total,
-                "change": customer_change["value"],
-                "changeType": customer_change["type"],
-            },
-            "credit_applications": {
-                "value": apps_total,
-                "change": apps_change["value"],
-                "changeType": apps_change["type"],
-            },
-            "exposure": {
-                "value": total_exposure,
-                "change": "+0%",
-                "changeType": "positive",
-            },
-            "approval_rate": {
-                "value": approval_rate,
-                "change": f"{round(approval_rate - approval_rate_prev, 1)}%",
-                "changeType": "positive" if approval_rate >= approval_rate_prev else "negative",
-            },
-            "overdue": {
-                "value": overdue_count,
-                "changeType": "negative" if overdue_count > 0 else "positive",
-            },
-            "pending": {
-                "value": pending_apps,
-                "changeType": "positive" if pending_apps > 0 else "positive",
-            },
-        },
-        "generated_at": now.isoformat(),
-    }
