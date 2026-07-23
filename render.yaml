@@ -34,7 +34,7 @@ services:
         value: "20"
     autoDeploy: true
 
-  - type: pgsql
+  - type: postgresql
     name: creditai-db
     plan: free
     databaseName: creditai
