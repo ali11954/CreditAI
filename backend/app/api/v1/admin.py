@@ -45,7 +45,7 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
         """))
 
         await db.execute(text("""
-            INSERT INTO report_templates (id, name, name_ar, description, category, query, parameters, format, is_active, created_at, updated_at, title_en, icon, color)
+            INSERT INTO report_templates (id, name, name_ar, description, module, query_template, parameters, format, is_active, created_at, updated_at, title_en, icon, color)
             VALUES
             ('d08e4b96-2055-4049-823f-ad7bc3596abe', 'Customer Summary Report', 'تقرير ملخص العملاء', 'تقرير شامل بالعملاء', 'customers', 'SELECT * FROM customers', NULL, 'pdf', true, now(), now(), 'Customer Summary Report', 'Users', 'text-blue-500'),
             ('5c4e124e-5f07-4c90-b296-bcf82310b492', 'Credit Applications Report', 'تقرير طلبات الائتمان', 'تقرير بطلبات الائتمان', 'credit', 'SELECT * FROM credit_applications', NULL, 'pdf', true, now(), now(), 'Credit Applications Report', 'FileText', 'text-green-500'),
