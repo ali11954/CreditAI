@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { Breadcrumbs } from '@/components/layout/breadcrumbs';
+import { authService } from '@/lib/auth';
+import api from '@/lib/api';
 
 export default function DashboardLayout({
   children,
@@ -11,6 +14,37 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = authService.getToken();
+      if (!token) {
+        try {
+          const res = await api.get('/users', { params: { page: 1, page_size: 1 } });
+          if (res.data && res.data.total > 0) {
+            router.replace('/login');
+            return;
+          }
+          setIsAuthenticated(true);
+        } catch {
+          setIsAuthenticated(true);
+        }
+        return;
+      }
+      setIsAuthenticated(true);
+    };
+    checkAuth();
+  }, [router]);
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
