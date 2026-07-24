@@ -15,7 +15,7 @@ services:
       - key: DEBUG
         value: "false"
       - key: CORS_ORIGINS
-        value: '["https://creditai-frontend.onrender.com"]'
+        value: '["http://localhost:3000","https://creditai-frontend.onrender.com"]'
     healthCheckPath: /health
     autoDeploy: true
 

@@ -34,13 +34,7 @@ const DEFAULT_PRODUCTION_API =
 
 
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (
-    process.env.NODE_ENV === "production"
-      ? DEFAULT_PRODUCTION_API
-      : DEFAULT_LOCAL_API
-  );
+export const API_URL = 'https://creditai-backend-477s.onrender.com/api/v1';
 
 
 
