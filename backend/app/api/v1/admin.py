@@ -65,3 +65,48 @@ async def seed_database(force: bool = False, db: AsyncSession = Depends(get_db))
     except Exception as e:
         await db.rollback()
         return {"error": str(e)}
+
+
+@router.post("/seed-demo-data")
+async def seed_demo_data(db: AsyncSession = Depends(get_db)):
+    try:
+        result = await db.execute(text("SELECT id FROM companies LIMIT 1"))
+        existing = result.scalar_one_or_none()
+        if existing:
+            return {"message": "Demo data already exists"}
+
+        company_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        admin_id = "06e5bbd3-66fc-4df5-8784-cc38447fa31a"
+
+        await db.execute(text("""
+            INSERT INTO companies (id, name, name_ar, registration_number, is_active, created_at, updated_at)
+            VALUES ('""" + company_id + """', 'CreditAI Corp', 'شركة كريديت أي آي', 'CR-001', true, now(), now())
+            ON CONFLICT (id) DO NOTHING
+        """))
+
+        customers = [
+            {"code": "CUST-00001", "name": "Al-Noor Trading Co.", "name_ar": "شركة النور للتجارة", "type": "Trading", "classification": "gold", "risk": "low", "score": 85, "status": "active", "region": "Sana'a"},
+            {"code": "CUST-00002", "name": "Yemen Gulf Construction", "name_ar": "شركة الخليج اليمنية للمقاولات", "type": "Construction", "classification": "platinum", "risk": "low", "score": 92, "status": "active", "region": "Aden"},
+            {"code": "CUST-00003", "name": "Al-Baraka Foods", "name_ar": "شركة البركة للأغذية", "type": "Food & Beverage", "classification": "silver", "risk": "medium", "score": 68, "status": "active", "region": "Taiz"},
+            {"code": "CUST-00004", "name": "Hadramout Oil & Gas", "name_ar": "شركة حضرموت للنفط والغاز", "type": "Oil & Gas", "classification": "platinum", "risk": "low", "score": 95, "status": "active", "region": "Hadramout"},
+            {"code": "CUST-00005", "name": "Saba Tech Solutions", "name_ar": "سبأ للحلول التقنية", "type": "Technology", "classification": "gold", "risk": "medium", "score": 75, "status": "active", "region": "Sana'a"},
+            {"code": "CUST-00006", "name": "Red Sea Hotels Group", "name_ar": "مجموعة فنادق البحر الأحمر", "type": "Hospitality", "classification": "silver", "risk": "medium", "score": 70, "status": "pending", "region": "Hodeidah"},
+            {"code": "CUST-00007", "name": "Al-Thawra Agricultural", "name_ar": "شركة الثورة الزراعية", "type": "Agriculture", "classification": "bronze", "risk": "high", "score": 45, "status": "active", "region": "Ibb"},
+            {"code": "CUST-00008", "name": "Future Pharma Yemen", "name_ar": "فيوتشر فارما اليمن", "type": "Pharmaceutical", "classification": "gold", "risk": "low", "score": 88, "status": "active", "region": "Sana'a"},
+            {"code": "CUST-00009", "name": "National Logistics Co.", "name_ar": "شركة الناشونال للخدمات اللوجستية", "type": "Logistics", "classification": "standard", "risk": "high", "score": 35, "status": "inactive", "region": "Aden"},
+            {"code": "CUST-00010", "name": "Smart City Developers", "name_ar": "مطوري المدينة الذكية", "type": "Real Estate", "classification": "silver", "risk": "medium", "score": 62, "status": "active", "region": "Sana'a"},
+        ]
+
+        for c in customers:
+            await db.execute(text(f"""
+                INSERT INTO customers (id, company_id, customer_code, name, name_ar, business_type, classification, risk_category, credit_score, status, sales_region, onboarding_status, kyc_status, is_active, created_by, created_at, updated_at)
+                VALUES (gen_random_uuid(), '{company_id}', '{c["code"]}', '{c["name"]}', '{c["name_ar"]}', '{c["type"]}', '{c["classification"]}', '{c["risk"]}', {c["score"]}, '{c["status"]}', '{c["region"]}', 'completed', 'verified', true, '{admin_id}', now(), now())
+                ON CONFLICT (customer_code) DO NOTHING
+            """))
+
+        await db.commit()
+        return {"message": "Demo data seeded successfully!", "customers": len(customers)}
+
+    except Exception as e:
+        await db.rollback()
+        return {"error": str(e)}
