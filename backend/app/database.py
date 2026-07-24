@@ -18,13 +18,16 @@ engine = create_async_engine(
     pool_recycle=300,
     pool_size=5,
     max_overflow=10,
+    connect_args={"prepare_threshold": 0},
 )
 
 
 @event.listens_for(engine.sync_engine, "connect")
-def set_prepare_threshold(dbapi_connection, connection_record):
-    if hasattr(dbapi_connection, "prepare_threshold"):
+def _set_prepare_threshold(dbapi_connection, connection_record):
+    try:
         dbapi_connection.prepare_threshold = 0
+    except Exception:
+        pass
 
 async_session_factory = async_sessionmaker(
     bind=engine,
