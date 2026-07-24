@@ -97,19 +97,23 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
             {"code": "CUST-00010", "name": "Smart City Developers", "name_ar": "مطوري المدينة الذكية", "type": "Real Estate", "classification": "silver", "risk": "medium", "score": 62, "status": "active", "region": "Sana'a"},
         ]
 
+        count = 0
         for c in customers:
+            exists = await db.execute(text("SELECT 1 FROM customers WHERE name = :name"), {"name": c["name"]})
+            if exists.scalar_one_or_none():
+                continue
             await db.execute(text("""
                 INSERT INTO customers (id, company_id, customer_code, name, name_ar, business_type, classification, risk_category, credit_score, status, sales_region, onboarding_status, kyc_status, is_active, created_by, created_at, updated_at)
                 VALUES (gen_random_uuid(), :company_id, :code, :name, :name_ar, :btype, :class, :risk, :score, :status, :region, 'completed', 'verified', true, :admin_id, now(), now())
-                ON CONFLICT (customer_code) DO NOTHING
             """), {
                 "company_id": company_id, "code": c["code"], "name": c["name"], "name_ar": c["name_ar"],
                 "btype": c["type"], "class": c["classification"], "risk": c["risk"],
                 "score": c["score"], "status": c["status"], "region": c["region"], "admin_id": admin_id,
             })
+            count += 1
 
         await db.commit()
-        return {"message": "Demo data seeded successfully!", "customers": len(customers)}
+        return {"message": "Demo data seeded successfully!", "customers": count}
 
     except Exception as e:
         await db.rollback()

@@ -41,7 +41,7 @@ export const API_URL = '/api/v1';
 export const API_TIMEOUT =
   Number(
     process.env.NEXT_PUBLIC_API_TIMEOUT
-  ) || 60000;
+  ) || 90000;
 
 
 

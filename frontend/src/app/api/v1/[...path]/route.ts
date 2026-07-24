@@ -14,13 +14,17 @@ async function proxy(request: NextRequest, path: string[]) {
   const auth = request.headers.get('authorization');
   if (auth) headers['Authorization'] = auth;
 
-  const init: RequestInit = { method: request.method, headers };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
+
+  const init: RequestInit = { method: request.method, headers, signal: controller.signal };
   if (!['GET', 'HEAD'].includes(request.method)) {
     init.body = await request.text();
   }
 
   try {
     const res = await fetch(targetUrl, init);
+    clearTimeout(timeout);
     const body = await res.text();
     return new NextResponse(body, {
       status: res.status,
