@@ -34,7 +34,7 @@ const DEFAULT_PRODUCTION_API =
 
 
 
-export const API_URL = 'https://creditai-backend-477s.onrender.com/api/v1';
+export const API_URL = '/api/v1';
 
 
 
