@@ -80,9 +80,9 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
 
         await db.execute(text("""
             INSERT INTO companies (id, name, name_ar, registration_number, is_active, created_at, updated_at)
-            VALUES ('""" + company_id + """', 'CreditAI Corp', 'شركة كريديت أي آي', 'CR-001', true, now(), now())
+            VALUES (:company_id, 'CreditAI Corp', 'شركة كريديت أي آي', 'CR-001', true, now(), now())
             ON CONFLICT (id) DO NOTHING
-        """))
+        """), {"company_id": company_id})
 
         customers = [
             {"code": "CUST-00001", "name": "Al-Noor Trading Co.", "name_ar": "شركة النور للتجارة", "type": "Trading", "classification": "gold", "risk": "low", "score": 85, "status": "active", "region": "Sana'a"},
@@ -98,11 +98,15 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
         ]
 
         for c in customers:
-            await db.execute(text(f"""
+            await db.execute(text("""
                 INSERT INTO customers (id, company_id, customer_code, name, name_ar, business_type, classification, risk_category, credit_score, status, sales_region, onboarding_status, kyc_status, is_active, created_by, created_at, updated_at)
-                VALUES (gen_random_uuid(), '{company_id}', '{c["code"]}', '{c["name"]}', '{c["name_ar"]}', '{c["type"]}', '{c["classification"]}', '{c["risk"]}', {c["score"]}, '{c["status"]}', '{c["region"]}', 'completed', 'verified', true, '{admin_id}', now(), now())
+                VALUES (gen_random_uuid(), :company_id, :code, :name, :name_ar, :btype, :class, :risk, :score, :status, :region, 'completed', 'verified', true, :admin_id, now(), now())
                 ON CONFLICT (customer_code) DO NOTHING
-            """))
+            """), {
+                "company_id": company_id, "code": c["code"], "name": c["name"], "name_ar": c["name_ar"],
+                "btype": c["type"], "class": c["classification"], "risk": c["risk"],
+                "score": c["score"], "status": c["status"], "region": c["region"], "admin_id": admin_id,
+            })
 
         await db.commit()
         return {"message": "Demo data seeded successfully!", "customers": len(customers)}
