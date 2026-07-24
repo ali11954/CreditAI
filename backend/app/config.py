@@ -47,9 +47,18 @@ class Settings(BaseSettings):
     def async_database_url(self) -> str:
         url = self.DATABASE_URL
 
-        # Always use psycopg — compatible with pgbouncer on Supabase/Render
+        # Switch to psycopg for Supabase pgbouncer compatibility
         url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
         url = url.replace("postgresql://", "postgresql+psycopg://")
+
+        # Fix ssl param for psycopg (psycopg uses sslmode, not ssl)
+        import re
+        url = re.sub(r'[?&]ssl=true', '', url)
+        url = re.sub(r'[?&]ssl=require', '', url)
+        url = re.sub(r'[?&]sslmode=disable', '', url)
+        if 'sslmode=' not in url:
+            sep = '&' if '?' in url else '?'
+            url = f"{url}{sep}sslmode=require"
 
         return url
 
