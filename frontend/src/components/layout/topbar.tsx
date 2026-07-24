@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Bell, Moon, Sun, Globe, Menu, ChevronDown } from 'lucide-react';
+import { Search, Bell, Moon, Sun, Globe, Menu, ChevronDown, HelpCircle } from 'lucide-react';
+import { HelpGuide } from '@/components/help/help-guide';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -50,6 +51,8 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <HelpGuide />
+
         <Button
           variant="ghost"
           size="icon"

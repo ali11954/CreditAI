@@ -3,17 +3,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 
 from app.database import get_db
 from app.services.collection_service import CollectionService
-from app.schemas.collection import InvoiceCreate, InvoiceUpdate, InvoiceResponse
+from app.schemas.collection import (
+    InvoiceCreate, InvoiceUpdate, InvoiceResponse,
+    CollectionActivityCreate, CollectionActivityResponse,
+    PromiseToPayCreate, PromiseToPayResponse,
+    InstallmentPlanCreate, InstallmentPlanResponse,
+    InstallmentCreate,
+    SettlementCreate, SettlementResponse,
+    WriteOffCreate, WriteOffResponse,
+)
 from app.schemas.common import PaginatedResponse, MessageResponse
 from app.dependencies import get_current_active_user, require_permission
 from app.models.sales import SalesInvoice
 from app.models.customer import Customer
 from app.models.core import Currency
+from app.models.collection import (
+    CollectionActivity, PromiseToPay, InstallmentPlan, Installment,
+    Settlement, WriteOff,
+)
 
 router = APIRouter()
 
@@ -177,104 +189,327 @@ async def delete_invoice(
     return {"message": "Invoice deleted successfully"}
 
 
-@router.get("/activities")
+@router.get("/activities", response_model=PaginatedResponse[CollectionActivityResponse])
 async def list_activities(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     customer_id: Optional[UUID] = None,
+    status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(CollectionActivity).where(CollectionActivity.is_active == True)
+
+    if customer_id:
+        query = query.where(CollectionActivity.customer_id == customer_id)
+    if status:
+        query = query.where(CollectionActivity.outcome == status)
+
+    count_query = select(func.count()).select_from(
+        select(CollectionActivity.id).where(CollectionActivity.is_active == True).subquery()
+    )
+    if customer_id:
+        count_query = count_query.where(CollectionActivity.customer_id == customer_id)
+    if status:
+        count_query = count_query.where(CollectionActivity.outcome == status)
+
+    total = (await db.execute(count_query)).scalar()
+
+    query = query.order_by(CollectionActivity.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size
+    )
 
 
-@router.post("/activities", status_code=status.HTTP_201_CREATED)
+@router.post("/activities", response_model=CollectionActivityResponse, status_code=status.HTTP_201_CREATED)
 async def create_activity(
-    activity_data: dict,
+    activity_data: CollectionActivityCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    activity = CollectionActivity(
+        customer_id=activity_data.customer_id,
+        invoice_id=activity_data.invoice_id,
+        activity_type=activity_data.activity_type,
+        direction=activity_data.direction,
+        subject=activity_data.subject,
+        content=activity_data.content,
+        scheduled_date=activity_data.scheduled_date,
+        completed_date=activity_data.completed_date,
+        outcome=activity_data.outcome,
+        next_action=activity_data.next_action,
+        next_action_date=activity_data.next_action_date,
+        created_by=current_user.id,
+    )
+    db.add(activity)
+    await db.commit()
+    await db.refresh(activity)
+    return activity
 
 
-@router.get("/promises-to-pay")
+@router.get("/promises-to-pay", response_model=PaginatedResponse[PromiseToPayResponse])
 async def list_promises_to_pay(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     customer_id: Optional[UUID] = None,
+    status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(PromiseToPay).where(PromiseToPay.is_active == True)
+
+    if customer_id:
+        query = query.where(PromiseToPay.customer_id == customer_id)
+    if status:
+        query = query.where(PromiseToPay.status == status)
+
+    count_query = select(func.count()).select_from(
+        select(PromiseToPay.id).where(PromiseToPay.is_active == True).subquery()
+    )
+    if customer_id:
+        count_query = count_query.where(PromiseToPay.customer_id == customer_id)
+    if status:
+        count_query = count_query.where(PromiseToPay.status == status)
+
+    total = (await db.execute(count_query)).scalar()
+
+    query = query.order_by(PromiseToPay.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size
+    )
 
 
-@router.post("/promises-to-pay", status_code=status.HTTP_201_CREATED)
+@router.post("/promises-to-pay", response_model=PromiseToPayResponse, status_code=status.HTTP_201_CREATED)
 async def create_promise_to_pay(
-    promise_data: dict,
+    promise_data: PromiseToPayCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    promise = PromiseToPay(
+        customer_id=promise_data.customer_id,
+        promise_date=promise_data.promise_date,
+        amount=promise_data.amount,
+        status=promise_data.status,
+        notes=promise_data.notes,
+        created_by=current_user.id,
+    )
+    db.add(promise)
+    await db.commit()
+    await db.refresh(promise)
+    return promise
 
 
-@router.get("/installment-plans")
+@router.get("/installment-plans", response_model=PaginatedResponse[InstallmentPlanResponse])
 async def list_installment_plans(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     customer_id: Optional[UUID] = None,
+    status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(InstallmentPlan).where(InstallmentPlan.is_active == True)
+
+    if customer_id:
+        query = query.where(InstallmentPlan.customer_id == customer_id)
+    if status:
+        query = query.where(InstallmentPlan.status == status)
+
+    count_query = select(func.count()).select_from(
+        select(InstallmentPlan.id).where(InstallmentPlan.is_active == True).subquery()
+    )
+    if customer_id:
+        count_query = count_query.where(InstallmentPlan.customer_id == customer_id)
+    if status:
+        count_query = count_query.where(InstallmentPlan.status == status)
+
+    total = (await db.execute(count_query)).scalar()
+
+    query = query.order_by(InstallmentPlan.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size
+    )
 
 
-@router.post("/installment-plans", status_code=status.HTTP_201_CREATED)
+@router.post("/installment-plans", response_model=InstallmentPlanResponse, status_code=status.HTTP_201_CREATED)
 async def create_installment_plan(
-    plan_data: dict,
+    plan_data: InstallmentPlanCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    plan = InstallmentPlan(
+        customer_id=plan_data.customer_id,
+        total_amount=plan_data.total_amount,
+        down_payment=plan_data.down_payment,
+        number_of_installments=plan_data.number_of_installments,
+        frequency=plan_data.frequency,
+        status=plan_data.status,
+    )
+    db.add(plan)
+    await db.flush()
+
+    remaining = plan_data.total_amount - plan_data.down_payment
+    installment_amount = remaining / plan_data.number_of_installments
+
+    frequency_days = {
+        "weekly": 7,
+        "biweekly": 14,
+        "monthly": 30,
+        "quarterly": 90,
+    }
+    days = frequency_days.get(plan_data.frequency.lower(), 30)
+    base_date = datetime.utcnow()
+
+    for i in range(1, plan_data.number_of_installments + 1):
+        installment = Installment(
+            plan_id=plan.id,
+            installment_number=i,
+            due_date=base_date + timedelta(days=days * i),
+            amount=installment_amount,
+        )
+        db.add(installment)
+
+    await db.commit()
+    await db.refresh(plan)
+    return plan
 
 
-@router.get("/settlements")
+@router.get("/settlements", response_model=PaginatedResponse[SettlementResponse])
 async def list_settlements(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     customer_id: Optional[UUID] = None,
+    status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(Settlement).where(Settlement.is_active == True)
+
+    if customer_id:
+        query = query.where(Settlement.customer_id == customer_id)
+
+    count_query = select(func.count()).select_from(
+        select(Settlement.id).where(Settlement.is_active == True).subquery()
+    )
+    if customer_id:
+        count_query = count_query.where(Settlement.customer_id == customer_id)
+
+    total = (await db.execute(count_query)).scalar()
+
+    query = query.order_by(Settlement.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size
+    )
 
 
-@router.post("/settlements", status_code=status.HTTP_201_CREATED)
+@router.post("/settlements", response_model=SettlementResponse, status_code=status.HTTP_201_CREATED)
 async def create_settlement(
-    settlement_data: dict,
+    settlement_data: SettlementCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    settlement = Settlement(
+        customer_id=settlement_data.customer_id,
+        original_amount=settlement_data.original_amount,
+        settled_amount=settlement_data.settled_amount,
+        discount_percentage=settlement_data.discount_percentage,
+        discount_amount=settlement_data.discount_amount,
+        settlement_date=settlement_data.settlement_date,
+        approved_by=current_user.id,
+        reason=settlement_data.reason,
+    )
+    db.add(settlement)
+    await db.commit()
+    await db.refresh(settlement)
+    return settlement
 
 
-@router.get("/write-offs")
+@router.get("/write-offs", response_model=PaginatedResponse[WriteOffResponse])
 async def list_write_offs(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     customer_id: Optional[UUID] = None,
+    status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(WriteOff).where(WriteOff.is_active == True)
+
+    if customer_id:
+        query = query.where(WriteOff.customer_id == customer_id)
+
+    count_query = select(func.count()).select_from(
+        select(WriteOff.id).where(WriteOff.is_active == True).subquery()
+    )
+    if customer_id:
+        count_query = count_query.where(WriteOff.customer_id == customer_id)
+
+    total = (await db.execute(count_query)).scalar()
+
+    query = query.order_by(WriteOff.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size
+    )
 
 
-@router.post("/write-offs", status_code=status.HTTP_201_CREATED)
+@router.post("/write-offs", response_model=WriteOffResponse, status_code=status.HTTP_201_CREATED)
 async def create_write_off(
-    write_off_data: dict,
+    write_off_data: WriteOffCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("collections:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    write_off = WriteOff(
+        customer_id=write_off_data.customer_id,
+        amount=write_off_data.amount,
+        reason=write_off_data.reason,
+        approved_by=current_user.id,
+        approved_at=datetime.utcnow(),
+        written_off_at=write_off_data.written_off_at,
+    )
+    db.add(write_off)
+    await db.commit()
+    await db.refresh(write_off)
+    return write_off
 
 
 @router.post("/upload-excel", response_model=MessageResponse)
