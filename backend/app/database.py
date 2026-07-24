@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
-import psycopg as _psycopg
+from sqlalchemy import event
+from sqlalchemy.dialects.postgresql.psycopg import PGDialect_psycopg
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -10,19 +11,22 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
 
-# Monkey-patch psycopg to always disable prepared statements
-# This is necessary because Supabase pgbouncer (transaction mode)
-# does not support server-side prepared statements
-_original_connect = _psycopg.Connection.connect.__func__
+# ============================================================
+# CRITICAL: Disable server-side prepared statements
+# Supabase pgbouncer (transaction mode) drops server-side state
+# between transactions, causing DuplicatePreparedStatement errors.
+# We patch the dialect's connect() to force prepare_threshold=0.
+# ============================================================
+_original_dialect_connect = PGDialect_psycopg.connect
 
 
-@classmethod  # type: ignore
-def _safe_connect(cls, *args, **kwargs):
-    kwargs.setdefault("prepare_threshold", 0)
-    return _original_connect(cls, *args, **kwargs)
+def _patched_connect(self, *cargs, **cparams):
+    cparams = dict(cparams)
+    cparams["prepare_threshold"] = 0
+    return _original_dialect_connect(self, *cargs, **cparams)
 
 
-_psycopg.Connection.connect = _safe_connect  # type: ignore
+PGDialect_psycopg.connect = _patched_connect  # type: ignore
 
 
 engine = create_async_engine(
@@ -33,6 +37,12 @@ engine = create_async_engine(
     pool_size=5,
     max_overflow=10,
 )
+
+
+@event.listens_for(engine.pool, "checkout")
+def _on_checkout(conn, rec, proxy):
+    if hasattr(conn, "prepare_threshold"):
+        conn.prepare_threshold = 0
 
 
 async_session_factory = async_sessionmaker(
