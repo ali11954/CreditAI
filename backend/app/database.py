@@ -68,6 +68,8 @@ def _run_migrations_sync():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS rejection_reason TEXT",
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sales_invoice_id UUID",
+        # Approve all existing users (they predate the approval system)
+        "UPDATE users SET approval_status = 'approved', is_active = true WHERE approval_status IS NULL OR approval_status = 'pending'",
     ]
     try:
         conn = psycopg.connect(settings.sync_database_url)
