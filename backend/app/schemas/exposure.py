@@ -9,7 +9,7 @@ class ExposureBase(BaseModel):
     exposure_type: str
     amount: Decimal
     currency_id: Optional[UUID] = None
-    details: dict = {}
+    details: Optional[dict] = None
 
 
 class ExposureCreate(ExposureBase):

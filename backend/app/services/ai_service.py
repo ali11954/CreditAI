@@ -30,8 +30,8 @@ class AIService:
         )
         apps = list(apps_result.scalars().all())
         
-        total_invoiced = sum(float(inv.total or 0) for inv in invoices)
-        total_paid = sum(float(inv.total or 0) - float(inv.balance or 0) for inv in invoices)
+        total_invoiced = sum(float(inv.total_amount or 0) for inv in invoices)
+        total_paid = sum(float(inv.total_amount or 0) - float(inv.balance or 0) for inv in invoices)
         total_balance = sum(float(inv.balance or 0) for inv in invoices)
         overdue = sum(1 for inv in invoices if inv.due_date and inv.due_date < datetime.utcnow() and float(inv.balance or 0) > 0)
         

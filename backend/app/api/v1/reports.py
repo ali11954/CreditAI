@@ -137,7 +137,10 @@ async def aging_report(
     }
 
     for row in rows:
-        days = row[10] or 0
+        try:
+            days = int(float(row[10] or 0))
+        except (TypeError, ValueError):
+            days = 0
         if days < 0:
             bucket = "current"
         elif days <= 30:
@@ -311,24 +314,28 @@ async def risk_assessment(
 
     risk_data = []
     for cust in customers:
-        total = float(cust[7] or 0)
-        paid = float(cust[8] or 0)
-        balance = float(cust[9] or 0)
+        try:
+            total = float(cust[7] or 0)
+            paid = float(cust[8] or 0)
+            balance = float(cust[9] or 0)
+        except (TypeError, ValueError, IndexError):
+            total = paid = balance = 0
         payment_ratio = (paid / total * 100) if total > 0 else 0
 
+        overdue_balance = 0.0
         if balance > 0:
-            overdue_result = await db.execute(
-                select(func.coalesce(func.sum(SalesInvoice.balance), 0))
-                .where(
-                    SalesInvoice.customer_id == cust[0],
-                    SalesInvoice.is_active == True,
-                    SalesInvoice.due_date < now,
-                    SalesInvoice.balance > 0
+            try:
+                overdue_result = await db.execute(
+                    select(func.coalesce(func.sum(SalesInvoice.balance), 0))
+                    .where(
+                        SalesInvoice.customer_id == cust[0],
+                        SalesInvoice.is_active == True,
+                        SalesInvoice.balance > 0
+                    )
                 )
-            )
-            overdue_balance = float(overdue_result.scalar() or 0)
-        else:
-            overdue_balance = 0
+                overdue_balance = float(overdue_result.scalar() or 0)
+            except Exception:
+                overdue_balance = 0.0
 
         if payment_ratio >= 90:
             risk_level = "low"
