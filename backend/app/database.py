@@ -14,18 +14,9 @@ from app.config import settings
 # CRITICAL: Disable server-side prepared statements for pgbouncer
 # Supabase pgbouncer (transaction mode) drops server-side state
 # between transactions, causing DuplicatePreparedStatement errors.
-# We patch psycopg.Connection.connect to force prepare_threshold=0.
+# Set prepare_threshold=0 as class default for ALL psycopg connections.
 # ============================================================
-_original_connect = psycopg.Connection.connect
-
-
-def _patched_connect(*args, **kwargs):
-    conn = _original_connect(*args, **kwargs)
-    conn.prepare_threshold = 0
-    return conn
-
-
-psycopg.Connection.connect = _patched_connect  # type: ignore
+psycopg.Connection.prepare_threshold = 0
 
 
 engine = create_async_engine(
