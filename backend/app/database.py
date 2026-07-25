@@ -54,5 +54,32 @@ async def create_tables():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"CREATE_TABLES ERROR: {e}")
+    # Run migrations using direct psycopg connection (bypasses SQLAlchemy async)
+    _run_migrations_sync()
+
+
+def _run_migrations_sync():
+    """Add missing columns using direct psycopg connection."""
+    migrations = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS approval_status VARCHAR(50) DEFAULT 'pending'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_by UUID",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS rejection_reason TEXT",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sales_invoice_id UUID",
+    ]
+    try:
+        conn = psycopg.connect(settings.sync_database_url)
+        conn.autocommit = True
+        cur = conn.cursor()
+        for sql in migrations:
+            try:
+                cur.execute(sql)
+                print(f"MIGRATION OK: {sql[:60]}...")
+            except Exception as e:
+                print(f"MIGRATION WARN: {sql[:60]}... -> {e}")
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"MIGRATION CONNECT ERROR: {e}")

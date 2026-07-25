@@ -34,13 +34,20 @@ class Settings(BaseSettings):
     )
 
 
-    DATABASE_URL_SYNC: str = Field(
-        default=(
-            "postgresql://"
-            "postgres:postgres@localhost:5432/creditai"
-        ),
-        validation_alias="DATABASE_URL_SYNC"
-    )
+    @property
+    def sync_database_url(self) -> str:
+        url = self.DATABASE_URL
+        url = url.replace("postgresql+asyncpg://", "postgresql://")
+        url = url.replace("postgresql+psycopg://", "postgresql://")
+        if "localhost" not in url and "127.0.0.1" not in url:
+            import re
+            url = re.sub(r'[?&]sslmode=disable', '', url)
+            url = re.sub(r'[?&]ssl=true', '', url)
+            url = re.sub(r'[?&]ssl=require', '', url)
+            if 'sslmode=' not in url:
+                sep = '&' if '?' in url else '?'
+                url = f"{url}{sep}sslmode=require"
+        return url
 
 
     @property
