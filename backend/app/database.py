@@ -1,6 +1,6 @@
+import psycopg
 from typing import AsyncGenerator
 
-from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -9,6 +9,23 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
+
+# ============================================================
+# CRITICAL: Disable server-side prepared statements for pgbouncer
+# Supabase pgbouncer (transaction mode) drops server-side state
+# between transactions, causing DuplicatePreparedStatement errors.
+# We patch psycopg.Connection.connect to force prepare_threshold=0.
+# ============================================================
+_original_connect = psycopg.Connection.connect
+
+
+def _patched_connect(*args, **kwargs):
+    conn = _original_connect(*args, **kwargs)
+    conn.prepare_threshold = 0
+    return conn
+
+
+psycopg.Connection.connect = _patched_connect  # type: ignore
 
 
 engine = create_async_engine(
@@ -19,12 +36,6 @@ engine = create_async_engine(
     pool_size=5,
     max_overflow=10,
 )
-
-
-@event.listens_for(engine.sync_engine, "connect")
-def _set_prepare_threshold(dbapi_conn, connection_record):
-    if hasattr(dbapi_conn, "prepare_threshold"):
-        dbapi_conn.prepare_threshold = 0
 
 
 async_session_factory = async_sessionmaker(
