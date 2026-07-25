@@ -135,29 +135,34 @@ export default function ExposurePage() {
   };
 
   const columns: ColumnDef<Exposure>[] = [
-    { accessorKey: 'customer_name', header: 'العميل', cell: ({ row }) => <span className="font-arabic">{row.getValue('customer_name') || row.original.customer_id}</span> },
-    { accessorKey: 'exposure_type', header: 'النوع', cell: ({ row }) => <span className="font-arabic">{row.getValue('exposure_type')}</span> },
+    { accessorKey: 'customer_name', header: 'العميل', cell: ({ row }) => {
+      const val = row.getValue('customer_name');
+      const display = typeof val === 'object' && val !== null ? (val as any).name : (val || row.original.customer_id);
+      return <span className="font-arabic">{display}</span>;
+    }},
+    { accessorKey: 'exposure_type', header: 'النوع', cell: ({ row }) => <span className="font-arabic">{String(row.getValue('exposure_type') || '')}</span> },
     {
       accessorKey: 'amount',
       header: 'المبلغ',
-      cell: ({ row }) => new Intl.NumberFormat('en-US', { style: 'currency', currency: row.original.currency || 'USD', numberingSystem: 'latn' }).format(row.getValue('amount')),
-    },
-    {
-      accessorKey: 'risk_level',
-      header: 'مستوى المخاطرة',
       cell: ({ row }) => {
-        const risk = row.getValue('risk_level') as string;
-        const variants: Record<string, 'success' | 'warning' | 'destructive'> = { low: 'success', medium: 'warning', high: 'destructive', critical: 'destructive' };
-        const labels: Record<string, string> = { low: 'منخفض', medium: 'متوسط', high: 'مرتفع', critical: 'حرج' };
-        return <Badge variant={variants[risk] || 'default'}>{labels[risk] || risk}</Badge>;
+        const val = Number(row.getValue('amount') || 0);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', numberingSystem: 'latn' }).format(val);
       },
     },
     {
-      accessorKey: 'status',
+      accessorKey: 'calculated_at',
+      header: 'آخر حساب',
+      cell: ({ row }) => {
+        const val = row.getValue('calculated_at');
+        return <span>{val ? new Date(val as string).toLocaleDateString('ar') : '-'}</span>;
+      },
+    },
+    {
+      accessorKey: 'is_active',
       header: 'الحالة',
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        return <Badge variant={status === 'active' ? 'success' : 'secondary'}>{status === 'active' ? 'نشط' : 'غير نشط'}</Badge>;
+        const active = row.getValue('is_active');
+        return <Badge variant={active ? 'success' : 'secondary'}>{active ? 'نشط' : 'غير نشط'}</Badge>;
       },
     },
     {

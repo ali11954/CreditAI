@@ -153,38 +153,33 @@ export default function CompliancePage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-md border p-4">
-                <div className="flex items-center gap-3">
-                  {item.status === 'compliant' ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                  )}
-                  <div>
-                    <p className="font-medium font-arabic">{item.title}</p>
-                    <p className="text-sm text-muted-foreground font-arabic">
-                      آخر فحص: {item.last_check} | الفحص القادم: {item.next_check}
-                    </p>
+            {items.map((item) => {
+              const title = typeof item.title === 'object' ? item.title?.name : (item.title || item.case_type || '-');
+              const status = item.status || 'pending';
+              const statusColors: Record<string, string> = { compliant: 'text-green-500', warning: 'text-yellow-500', pending: 'text-blue-500', overdue: 'text-red-500' };
+              return (
+                <div key={item.id} className="flex items-center justify-between rounded-md border p-4">
+                  <div className="flex items-center gap-3">
+                    {status === 'compliant' ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className={`h-5 w-5 ${statusColors[status] || 'text-yellow-500'}`} />
+                    )}
+                    <div>
+                      <p className="font-medium font-arabic">{String(title)}</p>
+                      <p className="text-sm text-muted-foreground font-arabic">
+                        النوع: {String(item.case_type || '-')} | الأولوية: {String(item.priority || '-')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={status === 'compliant' ? 'success' : status === 'warning' ? 'warning' : 'destructive'}>
+                      {status === 'compliant' ? 'متوافق' : status === 'warning' ? 'تحذير' : status === 'pending' ? 'قيد المراجعة' : 'متأخر'}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={item.status === 'compliant' ? 'success' : item.status === 'warning' ? 'warning' : 'destructive'}>
-                    {item.status === 'compliant' ? 'متوافق' : item.status === 'warning' ? 'تحذير' : 'متأخر'}
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">تحديث</Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'compliant')}>متوافق</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'warning')}>تحذير</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'overdue')}>متأخر</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {items.length === 0 && (
               <p className="text-center text-muted-foreground font-arabic py-8">لا توجد عناصر امتثال</p>
             )}

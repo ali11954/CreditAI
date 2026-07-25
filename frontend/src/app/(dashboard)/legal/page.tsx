@@ -23,10 +23,10 @@ interface LegalCase {
   customer_id: string;
   customer_name?: string;
   case_type: string;
-  court: string;
-  amount: number;
-  court_date: string;
-  lawyer: string;
+  court_name: string;
+  amount_in_dispute: number;
+  next_hearing_date: string;
+  assigned_lawyer_id: string;
   status: string;
 }
 
@@ -122,23 +122,34 @@ export default function LegalPage() {
   };
 
   const columns: ColumnDef<LegalCase>[] = [
-    { accessorKey: 'customer_name', header: 'العميل', cell: ({ row }) => <span className="font-arabic">{row.getValue('customer_name') || row.original.customer_id}</span> },
-    { accessorKey: 'case_type', header: 'النوع', cell: ({ row }) => <span className="font-arabic">{row.getValue('case_type')}</span> },
-    { accessorKey: 'court', header: 'المحكمة', cell: ({ row }) => <span className="font-arabic">{row.getValue('court')}</span> },
+    { accessorKey: 'customer_name', header: 'العميل', cell: ({ row }) => {
+      const val = row.getValue('customer_name');
+      const display = typeof val === 'object' && val !== null ? (val as any).name : (val || row.original.customer_id);
+      return <span className="font-arabic">{display}</span>;
+    }},
+    { accessorKey: 'case_type', header: 'النوع', cell: ({ row }) => <span className="font-arabic">{String(row.getValue('case_type') || '')}</span> },
+    { accessorKey: 'court_name', header: 'المحكمة', cell: ({ row }) => <span className="font-arabic">{String(row.getValue('court_name') || row.original.court_name || '-')}</span> },
     {
-      accessorKey: 'amount',
+      accessorKey: 'amount_in_dispute',
       header: 'المبلغ',
-      cell: ({ row }) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', numberingSystem: 'latn' }).format(row.getValue('amount')),
+      cell: ({ row }) => {
+        const val = row.getValue('amount_in_dispute') ?? row.original.amount_in_dispute ?? 0;
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', numberingSystem: 'latn' }).format(Number(val) || 0);
+      },
     },
-    { accessorKey: 'court_date', header: 'تاريخ الجلسة' },
-    { accessorKey: 'lawyer', header: 'المحامي', cell: ({ row }) => <span className="font-arabic">{row.getValue('lawyer')}</span> },
+    { accessorKey: 'next_hearing_date', header: 'التاريخ القادم', cell: ({ row }) => {
+      const val = row.original.next_hearing_date;
+      if (!val || typeof val !== 'string') return <span>-</span>;
+      return <span>{new Date(val).toLocaleDateString('ar')}</span>;
+    }},
+    { accessorKey: 'assigned_lawyer_id', header: 'المحامي', cell: ({ row }) => <span className="font-arabic">{String(row.getValue('assigned_lawyer_id') || '-')}</span> },
     {
       accessorKey: 'status',
       header: 'الحالة',
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        const labels: Record<string, string> = { filed: 'مقدم', hearing: 'سماع', judgment: 'حكم', enforced: 'منفذ' };
-        return <Badge variant={status === 'enforced' ? 'success' : 'warning'}>{labels[status] || status}</Badge>;
+        const status = String(row.getValue('status') || '');
+        const labels: Record<string, string> = { open: 'مفتوح', closed: 'مغلق', won: 'رفعت', lost: 'خسرت' };
+        return <Badge variant={status === 'open' ? 'warning' : 'success'}>{labels[status] || status}</Badge>;
       },
     },
     {
@@ -152,7 +163,7 @@ export default function LegalPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { setEditingItem(row.original); setFormData({ customer_id: row.original.customer_id, case_type: row.original.case_type, court: row.original.court, amount: String(row.original.amount), court_date: row.original.court_date, lawyer: row.original.lawyer }); setDialogOpen(true); }}>
+            <DropdownMenuItem onClick={() => { setEditingItem(row.original); setFormData({ customer_id: row.original.customer_id, case_type: row.original.case_type, court: row.original.court_name || '', amount: String(row.original.amount_in_dispute || 0), court_date: row.original.next_hearing_date || '', lawyer: row.original.assigned_lawyer_id || '' }); setDialogOpen(true); }}>
               <Edit className="mr-2 h-4 w-4" /> تعديل
             </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onClick={() => { setDeletingItem(row.original); setDeleteOpen(true); }}>
@@ -202,7 +213,7 @@ export default function LegalPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-arabic">إجمالي المبالغ</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold text-destructive">$ {(data.reduce((sum, item) => sum + (item.amount || 0), 0) / 1000000).toFixed(1)}M</p></CardContent>
+          <CardContent><p className="text-2xl font-bold text-destructive">$ {(data.reduce((sum, item) => sum + (Number(item.amount_in_dispute) || 0), 0) / 1000000).toFixed(1)}M</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-arabic">جلسات قادمة</CardTitle></CardHeader>

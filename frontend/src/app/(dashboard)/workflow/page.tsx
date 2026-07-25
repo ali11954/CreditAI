@@ -31,10 +31,9 @@ export default function WorkflowPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleToggleStatus = async (id: string, currentStatus: string) => {
+  const handleToggleStatus = async (id: string) => {
     try {
-      const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-      await api.put(`/workflow/templates/${id}`, { status: newStatus });
+      await api.put(`/workflow/templates/${id}`, { is_active: false });
       toast.success('تم تحديث الحالة بنجاح');
       fetchData();
     } catch (err: any) {
@@ -86,8 +85,8 @@ export default function WorkflowPage() {
                   <CardTitle className="font-arabic">{wf.name}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={wf.status === 'active' ? 'success' : 'secondary'}>
-                    {wf.status === 'active' ? 'نشط' : 'متوقف'}
+                  <Badge variant={wf.is_active ? 'success' : 'secondary'}>
+                    {wf.is_active ? 'نشط' : 'متوقف'}
                   </Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -99,9 +98,9 @@ export default function WorkflowPage() {
                       <DropdownMenuItem onClick={() => handleStartWorkflow(wf.id)}>
                         <Play className="mr-2 h-4 w-4" /> تشغيل
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleStatus(wf.id, wf.status)}>
-                        {wf.status === 'active' ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                        {wf.status === 'active' ? 'إيقاف' : 'تشغيل'}
+                      <DropdownMenuItem onClick={() => handleToggleStatus(wf.id)}>
+                        <Pause className="mr-2 h-4 w-4" />
+                        إيقاف
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -110,14 +109,14 @@ export default function WorkflowPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                <span className="font-arabic">{wf.steps_count || wf.steps || 0} خطوات</span>
-                <span className="font-arabic">{wf.runs_count || wf.runs || 0} تشغيل</span>
+                <span className="font-arabic">{Array.isArray(wf.steps) ? wf.steps.length : (wf.steps_count || 0)} خطوات</span>
+                <span className="font-arabic">{wf.runs_count || 0} تشغيل</span>
                 <span className="font-arabic">آخر تشغيل: {wf.last_run || '-'}</span>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="font-arabic" onClick={() => handleToggleStatus(wf.id, wf.status)}>
-                  {wf.status === 'active' ? <Pause className="ml-1 h-3 w-3" /> : <Play className="ml-1 h-3 w-3" />}
-                  {wf.status === 'active' ? 'إيقاف' : 'تشغيل'}
+                <Button variant="outline" size="sm" className="font-arabic" onClick={() => handleToggleStatus(wf.id)}>
+                  <Pause className="ml-1 h-3 w-3" />
+                  إيقاف
                 </Button>
                 <Button variant="ghost" size="sm">
                   <Settings className="h-3 w-3" />
