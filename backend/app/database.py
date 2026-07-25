@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -10,11 +11,6 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 
-connect_args = {}
-if 'pooler.supabase.com' in settings.async_database_url or 'supabase.co' in settings.async_database_url:
-    connect_args["prepare_threshold"] = 0
-
-
 engine = create_async_engine(
     settings.async_database_url,
     echo=False,
@@ -22,8 +18,13 @@ engine = create_async_engine(
     pool_recycle=300,
     pool_size=5,
     max_overflow=10,
-    connect_args=connect_args,
 )
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def _set_prepare_threshold(dbapi_conn, connection_record):
+    if hasattr(dbapi_conn, "prepare_threshold"):
+        dbapi_conn.prepare_threshold = 0
 
 
 async_session_factory = async_sessionmaker(
