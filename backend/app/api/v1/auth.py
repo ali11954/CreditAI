@@ -36,6 +36,18 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Invalid credentials"
         )
     
+    if user.approval_status == "pending":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account pending admin approval"
+        )
+    
+    if user.approval_status == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account rejected by admin"
+        )
+    
     if user.mfa_enabled:
         if not request.mfa_code:
             raise HTTPException(
@@ -104,7 +116,7 @@ async def refresh_token(request: RefreshTokenRequest, db: AsyncSession = Depends
     )
 
 
-@router.post("/register", response_model=TokenResponse)
+@router.post("/register")
 async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
     auth_service = AuthService(db)
     user = await auth_service.register_user(request)
@@ -114,14 +126,40 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
             detail="User already exists"
         )
     
-    access_token = auth_service.create_access_token(user.id)
-    refresh_token = auth_service.create_refresh_token(user.id)
-    
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_in=30 * 60
-    )
+    return {"message": "Registration successful. Waiting for admin approval.", "status": "pending"}
+
+
+@router.get("/pending-users")
+async def get_pending_users(current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Admin only")
+    auth_service = AuthService(db)
+    users = await auth_service.get_pending_users()
+    return [{"id": str(u.id), "email": u.email, "username": u.username, "full_name": u.full_name, "created_at": str(u.created_at)} for u in users]
+
+
+@router.post("/approve-user/{user_id}")
+async def approve_user(user_id: str, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Admin only")
+    auth_service = AuthService(db)
+    from uuid import UUID
+    user = await auth_service.approve_user(UUID(user_id), current_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User approved", "user_id": str(user.id)}
+
+
+@router.post("/reject-user/{user_id}")
+async def reject_user(user_id: str, reason: str = "", current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Admin only")
+    auth_service = AuthService(db)
+    from uuid import UUID
+    user = await auth_service.reject_user(UUID(user_id), reason)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User rejected", "user_id": str(user.id)}
 
 
 @router.post("/mfa-setup", response_model=MFASetup)

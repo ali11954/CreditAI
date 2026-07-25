@@ -32,9 +32,6 @@ class AuthService:
         if not user or not self.verify_password(password, user.password_hash):
             return None
         
-        if not user.is_active:
-            return None
-        
         if user.locked_until and user.locked_until > datetime.utcnow():
             return None
         
@@ -86,7 +83,9 @@ class AuthService:
             full_name=data.full_name,
             full_name_ar=data.full_name_ar,
             phone=data.phone,
-            password_hash=self.get_password_hash(data.password)
+            password_hash=self.get_password_hash(data.password),
+            is_active=False,
+            approval_status="pending",
         )
         self.db.add(user)
         await self.db.commit()
@@ -119,10 +118,35 @@ class AuthService:
         return True
     
     async def send_password_reset_email(self, email: str):
-        pass
+        result = await self.db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+        if not user:
+            return
+
+        token = jwt.encode(
+            {"sub": str(user.id), "exp": datetime.utcnow() + timedelta(hours=1), "type": "reset"},
+            settings.SECRET_KEY,
+            algorithm=settings.ALGORITHM,
+        )
+
+        reset_url = f"https://creditai-frontend.onrender.com/reset-password?token={token}"
+        print(f"\n{'='*60}\nPassword reset link for {email}:\n{reset_url}\n{'='*60}\n")
     
     async def reset_password(self, token: str, new_password: str) -> bool:
-        return False
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if payload.get("type") != "reset":
+                return False
+            user_id = UUID(payload.get("sub"))
+            result = await self.db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if not user:
+                return False
+            user.password_hash = self.get_password_hash(new_password)
+            await self.db.commit()
+            return True
+        except JWTError:
+            return False
     
     async def logout_user(self, user_id: UUID):
         result = await self.db.execute(
@@ -131,4 +155,45 @@ class AuthService:
         sessions = result.scalars().all()
         for session in sessions:
             await self.db.delete(session)
+        await self.db.commit()
+
+    async def approve_user(self, user_id: UUID, approved_by_id: UUID) -> Optional[User]:
+        result = await self.db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            return None
+        user.approval_status = "approved"
+        user.is_active = True
+        user.approved_by = approved_by_id
+        user.approved_at = datetime.utcnow()
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def reject_user(self, user_id: UUID, reason: str) -> Optional[User]:
+        result = await self.db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            return None
+        user.approval_status = "rejected"
+        user.rejection_reason = reason
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def get_pending_users(self):
+        result = await self.db.execute(
+            select(User).where(User.approval_status == "pending").order_by(User.created_at.desc())
+        )
+        return result.scalars().all()
+
+    async def assign_role(self, user_id: UUID, role_id: UUID):
+        from app.models.user import UserRole
+        existing = await self.db.execute(
+            select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
+        )
+        if existing.scalar_one_or_none():
+            return
+        user_role = UserRole(user_id=user_id, role_id=role_id)
+        self.db.add(user_role)
         await self.db.commit()

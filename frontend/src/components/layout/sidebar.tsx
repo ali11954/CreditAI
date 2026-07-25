@@ -72,6 +72,7 @@ const navigationSections = [
     sectionEn: 'User Management',
     items: [
       { label: 'المستخدمون', labelEn: 'Users', href: '/users', icon: 'Users' },
+      { label: 'موافقة الحسابات', labelEn: 'Approvals', href: '/user-approvals', icon: 'Users' },
       { label: 'الأدوار والصلاحيات', labelEn: 'Roles', href: '/roles', icon: 'Shield' },
     ],
   },
@@ -80,7 +81,16 @@ const navigationSections = [
     sectionEn: 'Customer Management',
     items: [
       { label: 'العملاء', labelEn: 'Customers', href: '/customers', icon: 'Building2' },
+      { label: 'إدارة العقود', labelEn: 'Contracts', href: '/contracts', icon: 'FileText' },
+    ],
+  },
+  {
+    section: 'المبيعات',
+    sectionEn: 'Sales',
+    items: [
       { label: 'المبيعات', labelEn: 'Sales', href: '/sales', icon: 'ShoppingCart' },
+      { label: 'أوامر البيع', labelEn: 'Sales Orders', href: '/sales-orders', icon: 'FileText' },
+      { label: 'الفواتير', labelEn: 'Invoicing', href: '/invoicing', icon: 'Banknote' },
     ],
   },
   {
@@ -92,10 +102,11 @@ const navigationSections = [
     ],
   },
   {
-    section: 'التحصيل والتدفق النقدي',
-    sectionEn: 'Collections',
+    section: 'التحصيل والمديونيات',
+    sectionEn: 'Collections & Receivables',
     items: [
       { label: 'التحصيل', labelEn: 'Collections', href: '/collections', icon: 'Banknote' },
+      { label: 'المديونيات و Aging', labelEn: 'Receivables', href: '/receivables', icon: 'BarChart3' },
     ],
   },
   {
