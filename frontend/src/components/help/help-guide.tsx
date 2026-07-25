@@ -29,6 +29,17 @@ import {
   TrendingUp,
   ShieldCheck,
   Layers,
+  FileSignature,
+  ClipboardList,
+  Truck,
+  Receipt,
+  Gavel,
+  Search,
+  MessageSquare,
+  AlertOctagon,
+  Eye,
+  FileBarChart,
+  BarChart2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,12 +59,11 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/language-context';
-import { cn } from '@/lib/utils';
 
-const t = {
+const content = {
   ar: {
     helpButton: 'دليل المساعدة',
-    dialogTitle: 'دليل منصة CreditAI Enterprise',
+    dialogTitle: 'دليل منصة CreditAI Enterprise — منصة Order-to-Cash المتكاملة',
     overview: 'نظرة عامة',
     modules: 'الوحدات',
     policies: 'السياسات والإجراءات',
@@ -61,136 +71,245 @@ const t = {
     systemOverview: 'نظرة عامة على النظام',
     platformName: 'CreditAI Enterprise',
     platformDesc:
-      'منصة متكاملة لإدارة الائتمان والتحصيل مدعومة بالذكاء الاصطناعي. توفر المنصة أدوات شاملة لإدارة العملاء، طلبات الائتمان، التحصيل، الامتثال، والتقارير التحليلية في بيئة آمنة وموثوقة.',
+      'منصة متكاملة لإدارة دورة الإيرادات (Order-to-Cash) على مستوى الأنظمة العالمية مثل SAP وOracle. تشمل إدارة العملاء، المبيعات، العقود، أوامر البيع، الفواتير، التحصيل، المديونيات، الائتمان، المخاطر، الامتثال، الإدارة القانونية، الوثائق، الذكاء الاصطناعي، التقارير، سير العمل، والتكامل مع ERP.',
     keyCapabilities: 'القدرات الأساسية',
-    cap1: 'إدارة دورة حياة العميل بالكامل',
-    cap2: 'أتمتة القرارات الائتمانية بالذكاء الاصطناعي',
-    cap3: 'تتبع التحصيل والتدفق النقدي',
-    cap4: 'الامتثال التنظيمي (AML/CFT)',
-    cap5: 'تقارير تحليلية وتقارير إدارية',
-    cap6: 'تكامل مع أنظمة SAP',
-    modulesTitle: 'دليل الوحدات',
+    cap1: 'إدارة دورة حياة العميل بالكامل (CRM)',
+    cap2: 'أتمتة المبيعات: عروض أسعار → أوامر بيع → تسليم → فواتير',
+    cap3: 'طلب ائتمان (100+ حقل) مع تحليل AI ولجنة اعتماد',
+    cap4: 'التحصيل الذكي مع جدول متابعة تلقائي',
+    cap5: 'إدارة المديونيات مع Aging Report ومؤشرات DSO',
+    cap6: 'كشف الاحتيال والتنبؤ بالتعثر بالذكاء الاصطناعي',
+    cap7: 'KYC / AML / PEP / قوائم العقوبات كشرط مسبق',
+    cap8: 'إدارة القضايا القانونية والإنذارات والمحاكم',
+    cap9: 'نظام إدارة وثائق (DMS) متكامل',
+    cap10: 'تكامل مع SAP وOracle وMicrosoft Dynamics',
+    modulesTitle: 'دليل الوحدات — 17 وحدة متكاملة',
     policiesTitle: 'السياسات والإجراءات العالمية',
     quickRefTitle: 'المرجع السريع',
     modulesList: [
       {
-        name: 'إدارة المستخدمين',
-        nameEn: 'User Management',
-        icon: 'Users',
-        desc: 'إدارة حسابات المستخدمين والأدوار والصلاحيات',
+        name: 'لوحة التحكم التنفيذية',
+        nameEn: 'Executive Dashboard',
+        icon: 'BarChart3',
+        desc: 'لوحة معلومات تفاعلية للمديرين التنفيذين',
         features: [
-          'إنشاء وتعديل وحذف المستخدمين',
-          'إدارة الأدوار المخصصة والصلاحيات',
-          'تتبع نشاط المستخدمين وسجل التدقيق',
-          'دعم المصادقة متعددة العوامل',
+          'إجمالي العملاء والمبيعات والمديونيات',
+          'الديون المتأخرة والتحصيل اليومي والشهري',
+          'متوسط فترة التحصيل (DSO) ونسبة الديون المعدومة',
+          'نسبة الموافقات والرفض الائتماني',
+          'أعلى 20 عميلاً حسب المبيعات والمديونية',
+          'العملاء الأكثر خطورة والمتوقع تعثرهم (AI)',
+          'تنبؤات التدفقات النقدية وأداء الفرق',
         ],
       },
       {
-        name: 'إدارة العملاء',
-        nameEn: 'Customer Management',
+        name: 'إدارة العملاء (CRM)',
+        nameEn: 'Customer Management (CRM)',
         icon: 'Building2',
-        desc: 'إدارة شاملة لبيانات العملاء وعمليات KYC',
+        desc: 'إدارة شاملة لبيانات العملاء وجهات الاتصال والمستندات',
         features: [
-          'تسجيل بيانات العميل الأساسية والقانونية',
-          'إدارة مستندات KYC (التعريف بالعميل)',
-          'تقييم المخاطر الأولية',
-          'تتبع تاريخ التعاملات',
+          'رقم العميل، الاسم، الاسم التجاري، النشاط، القطاع، الدولة، المدينة',
+          'الرقم الضريبي، السجل التجاري، رقم الهوية',
+          'جهات اتصال: المدير، المدير المالي، المحاسب، مدير المشتريات',
+          'مستندات العميل: سجل تجاري، بطاقة ضريبية، رخصة، عقد تأسيس',
+          'الميزانيات و��්රි الحساب البنكي',
+          'حالة العميل و تاريخ الإنشاء',
         ],
       },
       {
-        name: 'المبيعات',
-        nameEn: 'Sales',
+        name: 'إدارة المبيعات',
+        nameEn: 'Sales Management',
         icon: 'ShoppingCart',
-        desc: 'إدارة فواتير المبيعات والبيانات التجارية',
+        desc: 'عرض الأسعار → أمر البيع → التسليم → الفاتورة',
         features: [
-          'إنشاء وإدارة فواتير المبيعات',
-          'استيراد البيانات من ملفات CSV/Excel',
+          'عروض الأسعار: رقم العرض، المنتجات، الأسعار، الخصومات، الضريبة، الصلاحية',
+          'أوامر البيع: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed',
+          'التسليم: المخزن، الكمية، التاريخ، السائق، السيارة',
+          'استيراد البيانات من CSV/Excel',
           'تقارير المبيعات الشهرية والسنوية',
-          'إدارة الخصومات ومرتجعات المبيعات',
         ],
       },
       {
-        name: 'القرارات الائتمانية',
-        nameEn: 'Credit Decisions',
+        name: 'إدارة العقود',
+        nameEn: 'Contract Management',
+        icon: 'FileSignature',
+        desc: 'إنشاء وإدارة ومتابعة العقود',
+        features: [
+          'إنشاء العقود من قوالب جاهزة',
+          'تتبع حالة العقد (نشط، منتهي، معلق)',
+          'تنبيهات انتهاء الصلاحية',
+          'ربط العقود بالعملاء والفواتير',
+          'أرشيف العقود الرقمي',
+        ],
+      },
+      {
+        name: 'أوامر البيع',
+        nameEn: 'Sales Orders',
+        icon: 'ClipboardList',
+        desc: 'إدارة أوامر البيع من الإصدار إلى التسليم',
+        features: [
+          'إنشاء أمر بيع من عرض الأسعار مباشرة',
+          'حالات: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed',
+          'متابعة التسليم والمخزون',
+          'ربط بالأوامر السابقة والتاريخ',
+          'تقارير أوامر البيع المفتوحة والمغلقة',
+        ],
+      },
+      {
+        name: 'الفواتير',
+        nameEn: 'Invoicing',
+        icon: 'Receipt',
+        desc: 'إنشاء وإرسال الفواتير الإلكترونية',
+        features: [
+          'إنشاء فاتورة من أمر البيع مباشرة',
+          'تصدير PDF مع QR Code',
+          'حساب الضريبة تلقائياً',
+          'إرسال بالبريد الإلكتروني وWhatsApp',
+          'API للاستيراد والتصدير',
+          'تتبع حالة الفاتورة (مدفوعة، معلقة، متأخرة)',
+        ],
+      },
+      {
+        name: 'الائتمان',
+        nameEn: 'Credit Management',
         icon: 'CreditCard',
-        desc: 'نظام متكامل لطلب وتحليل واعتماد الائتمان',
+        desc: 'طلب ائتمان شامل (100+ حقل) مع تحليل ذكي ولجنة اعتماد',
         features: [
-          'تقديم طلبات الائتمان إلكترونياً',
-          'تحليل الائتمان بالذكاء الاصطناعي',
-          'اعتماد الطلبات عبر لجنة الائتمان',
-          'إدارة حدود الائتمان والمتابعة الدورية',
+          'نموذج طلب ائتمان: بيانات الشركة، الملاك، الإدارة، الحسابات البنكية',
+          'الموردون، العملاء، الإيرادات، المصروفات، الأرباح، الالتزامات',
+          'القروض، الضمانات، العقود، الشيكات، الأحكام القضائية',
+          'التصنيف الائتماني (AAA → CCC)',
+          'تحليل AI: الميزانية، التدفقات النقدية، الأرباح، الديون، المخاطر، السجل',
+          'درجة ائتمانية: 94/100 → توصية: الموافقة / حد 2,000,000 / مدة 90 يوم',
+          'لجنة الائتمان: محلل → مدير ائتمان → مدير مالي → مدير تنفيذي',
         ],
       },
       {
-        name: 'التحصيل والتدفق النقدي',
-        nameEn: 'Collections & Cash Flow',
+        name: 'حدود الائتمان',
+        nameEn: 'Credit Limits',
+        icon: 'Target',
+        desc: 'إدارة حدود الائتمان لكل عميل',
+        features: [
+          'الحد الحالي، المستخدم، المتبقي',
+          'الحد المؤقت والزيادة المؤقتة مع تاريخ الانتهاء',
+          'سجل تغييرات الحدود',
+          'ربط بالفواتير المعلقة',
+          'تنبيهات تجاوز الحد',
+        ],
+      },
+      {
+        name: 'التحصيل',
+        nameEn: 'Collections',
         icon: 'Banknote',
-        desc: 'تتبع وإدارة عمليات التحصيل والتدفق النقدي',
+        desc: 'جدول متابعة تلقائي مع تصعيد ذكي',
         features: [
-          'متابعة العملاء المتأخرين (30/60/90 يوم)',
-          'إدارة الوعود بالدفع والتقسيط',
-          'حسابات التسوية وشطب الديون',
-          'تقارير التدفق النقدي اليومية',
+          'قبل 7 أيام: رسالة تذكير',
+          'قبل 3 أيام: اتصال هاتفي',
+          'يوم الاستحقاق: إشعار رسمي',
+          'بعد 7 أيام: متابعة مكثفة',
+          'بعد 15 يوم: زيارة ميدانية',
+          'بعد 30 يوم: إنذار رسمي',
+          'بعد 60 يوم: تسليم للإجراءات القانونية',
+          'أقساط، وعود دفع، تسويات، شطب',
         ],
       },
       {
-        name: 'الإجراءات القانونية',
-        nameEn: 'Legal Actions',
-        icon: 'Scale',
-        desc: 'إدارة الإجراءات القانونية والإجراءات القضائية',
+        name: 'المديونيات',
+        nameEn: 'Receivables & Aging',
+        icon: 'BarChart2',
+        desc: 'Aging Report ومؤشرات أداء التحصيل',
+        features: [
+          'Aging Report: 0-30 / 31-60 / 61-90 / 91-120 / 120+ يوم',
+          'DSO: Average Collection Period',
+          'Collection Rate: نسبة التحصيل الفعلية',
+          'Bad Debt: نسبة الديون المعدومة',
+          'Average Delay: متوسط أيام التأخر',
+          'تقارير يومية وأسبوعية وشهرية',
+        ],
+      },
+      {
+        name: 'المخاطر',
+        nameEn: 'Risk Management',
+        icon: 'Shield',
+        desc: 'Risk Register مع Heat Map وتحليل مخاطر متقدم',
+        features: [
+          'Risk Register: الخطر، الاحتمال، التأثير، المستوى',
+          'Heat Map: حرجة / مرتفعة / متوسطة / منخفضة',
+          'حدود التركيز: عميل 15%، قطاع 30%، منطقة 25%',
+          'اختبار الضغط: انخفاض إيرادات 20%، ارتفاع فائدة 5%',
+          'الخسائر المتوقعة (IFRS 9) مع Provision',
+          'تصنيف AAA → CCC لكل عميل',
+        ],
+      },
+      {
+        name: 'الامتثال',
+        nameEn: 'Compliance',
+        icon: 'ShieldCheck',
+        desc: 'KYC / AML / PEP / قوائم العقوبات كشرط مسبق',
+        features: [
+          'KYC: التحقق من هوية العميل بالكامل',
+          'AML: مكافحة غسل الأموال وCFT',
+          'PEP: فحص الأشخاص المعنيين سياسياً',
+          'قوائم العقوبات: فحص دوري تلقائي',
+          'العميل الحقيقي والمستفيد النهائي',
+          'التوقيع الإلكتروني',
+          'عناية Due Diligence لكل عميل',
+        ],
+      },
+      {
+        name: 'الإدارة القانونية',
+        nameEn: 'Legal Management',
+        icon: 'Gavel',
+        desc: 'إدارة القضايا والإنذارات والمحاكم والتنفيذ',
         features: [
           'فتح وإدارة القضايا القانونية',
-          'تتبع مراحل القضية والمستندات',
+          'إنذارات رسمية وقانونية',
+          'التسويات القانونية',
+          'تتبع الجلسات والمحاكم',
+          'إجراءات التنفيذ الجبري',
           'إدارة المحامين والممثلين القانونيين',
-          'تقارير الحالة القانونية',
         ],
       },
       {
-        name: 'إدارة الوثائق',
-        nameEn: 'Document Management',
+        name: 'إدارة الوثائق (DMS)',
+        nameEn: 'Document Management (DMS)',
         icon: 'FolderOpen',
-        desc: 'نظام إدارة الوثائق والمستندات الإلكترونية',
+        desc: 'نظام إدارة وثائق متكامل لكل عميل',
         features: [
-          'رفع وتخزين الوثائق بأمان',
-          'تصنيف الوثائق حسب النوع والعميل',
-          'البحث السريع في المستندات',
-          'تتبع انتهاء صلاحية الوثائق',
-        ],
-      },
-      {
-        name: 'التقارير والتحليلات',
-        nameEn: 'Reports & Analytics',
-        icon: 'BarChart3',
-        desc: 'تقارير تحليلية شاملة ولوحات معلومات تفاعلية',
-        features: [
-          'لوحات معلومات تفاعلية للمديرين',
-          'تقارير مخصصة قابلة للتصدير',
-          'تحليل الاتجاهات والأنماط',
-          'تقارير الامتثال والمخاطر',
-        ],
-      },
-      {
-        name: 'الامتثال والمخاطر',
-        nameEn: 'Compliance & Risk',
-        icon: 'CheckCircle',
-        desc: 'إدارة الامتثال التنظيمي وتقييم المخاطر',
-        features: [
-          'التحقق من هوية العميل (KYC)',
-          'مكافحة غسل الأموال (AML/CFT)',
-          'فحص القوائم السوداء وال柬埔طة (PEP)',
-          'إدارة حالات الامتثال والمخالفة',
+          'العقود، الفواتير، الشيكات، الضمانات، المراسلات',
+          'رفع وتخزين بأمان مع تشفير',
+          'تصنيف حسب النوع والعميل والحالة',
+          'البحث السريع والتصفح',
+          'تتبع انتهاء الصلاحية والتنبيهات',
         ],
       },
       {
         name: 'مركز الذكاء الاصطناعي',
         nameEn: 'AI Center',
         icon: 'Brain',
-        desc: 'نماذج الذكاء الاصطناعي لتقييم المخاطر والتنبؤ',
+        desc: 'مركز قرار ذكي بـ 7 خدمات AI متكاملة',
         features: [
-          'نماذج تقييم الائتمان الذكية',
-          'تنبؤات باحتمال التخلف عن السداد',
-          'تحليل المخاطر المتقدم',
-          'تحسين مستمر للنماذج',
+          'AI Credit Scoring: تحليل ائتماني تلقائي ودرجة 94/100',
+          'AI Collection: اقتراح أفضل وقت وطريقة للتحصيل',
+          'AI Risk: توقع التعثر قبل حدوثه',
+          'AI Fraud Detection: كشف المعاملات المشبوهة والاحتيال',
+          'AI Document Reader: قراءة العقود والميزانيات واستخراج البيانات',
+          'AI Financial Analysis: تحليل القوائم المالية وإبراز المؤشرات',
+          'AI Forecast: تنبؤ بالتدفقات النقدية واحتمالات السداد',
+        ],
+      },
+      {
+        name: 'التقارير والتحليلات',
+        nameEn: 'Reports & Analytics',
+        icon: 'BarChart3',
+        desc: 'تقارير شاملة ولوحات معلومات تفاعلية',
+        features: [
+          'تقارير Aging Report و DSO',
+          'تقارير المبيعات والمديونيات',
+          'تقارير المخاطر والامتثال',
+          'تقارير التحصيل اليومية والشهرية',
+          'تصدير PDF / Excel / CSV',
+          'لوحات معلومات تفاعلية للمديرين',
         ],
       },
       {
@@ -199,34 +318,39 @@ const t = {
         icon: 'GitBranch',
         desc: 'أتمتة سير العمل وعمليات الاعتماد',
         features: [
-          'تعريف سير العمل المخصص',
-          'أتمتة مراحل الاعتماد',
-          'تتبع حالة الطلبات',
+          'تعريف سير عمل مخصص لكل وحدة',
+          'أتمتة مراحل الاعتماد (محلل → مدير → مالي → تنفيذي)',
+          'تتبع حالة الطلبات والقوالب',
           'إشعارات وتذكيرات تلقائية',
+          'approve / reject مع تعليقات',
         ],
       },
       {
-        name: 'تكامل SAP',
-        nameEn: 'SAP Integration',
+        name: 'التكامل مع ERP',
+        nameEn: 'ERP Integration',
         icon: 'Database',
-        desc: 'تكامل سلس مع نظام ERP SAP',
+        desc: 'تكامل مع SAP وOracle وMicrosoft Dynamics',
         features: [
-          'مزامنة بيانات العملاء',
-          'استيراد فواتير المبيعات',
+          'مزامنة بيانات العملاء (Business Partners)',
+          'استيراد فواتير المبيعات والمشتريات',
           'تحديثات الحسابات المدينة والدائنة',
-          'تقارير التكامل وال-sync',
+          'تقارير التكامل وسجلات المزامنة',
+          'Queue للمزامنة غير المتزامنة',
+          'API مفتوح لأي نظام ERP',
         ],
       },
       {
-        name: 'النظام',
-        nameEn: 'System',
+        name: 'الإعدادات والنظام',
+        nameEn: 'Settings & System',
         icon: 'Settings',
-        desc: 'إعدادات النظام والإعدادات العامة',
+        desc: 'الإعدادات العامة وإدارة العملات والأ modules',
         features: [
           'إدارة العملات وأسعار الصرف',
           'إعدادات النظام العامة',
-          'إدارة الإشعارات',
+          'إدارة الإشعارات والتفضيلات',
+          'إدارة القوائم (Menus) والوحدات (Modules)',
           'النسخ الاحتياطي واستعادة البيانات',
+          'سجل التدقيق (Audit Trail)',
         ],
       },
     ],
@@ -234,24 +358,19 @@ const t = {
       sales: 'سياسات المبيعات',
       salesItems: [
         {
-          title: 'شروط الائتمان',
+          title: 'عرض الأسعار',
           content:
-            'يتم تحديد شروط الائتمان بناءً على تقييم المخاطر للمعميل. تشمل المدة الزمنية (30/60/90 يوم) والحد الأقصى لمبلغ الائتمان ونسبة الفائدة المطبقة.',
+            'رقم العرض + العميل + المنتجات + الأسعار + الخصومات + الضريبة + الصلاحية. صلاحية العرض 30 يوماً. الخصومات فوق 10% تتطلب اعتماد المدير المالي.',
         },
         {
-          title: 'أسعار التسعير',
+          title: 'أوامر البيع',
           content:
-            'تُحدد الأسعار حسب فئات العملاء وحجم التعاملات. توجد خصومات خاصة للعملاء الاستراتيجيين وفقاً لموافقة الإدارة.',
+            'حالات: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed. كل حالة تتطلب اعتماداً محدداً. أمر البيع ينشأ من عرض الأسعار مباشرة.',
         },
         {
-          title: 'سير عمل الاعتماد',
+          title: 'التسليم',
           content:
-            'كل فاتورة تمر بمراحل: إنشاء → مراجعة → اعتماد → إصدار. المبالغ فوق الحد المحدد تتطلب اعتماد لجنة الائتمان.',
-        },
-        {
-          title: 'إدارة الفواتير',
-          content:
-            'تتبع الفواتير من الإصدار حتى السداد الكامل. إمكانية استيراد الفواتير من ملفات CSV وتصدير التقارير.',
+            'المخزن + الكمية + التاريخ + السائق + السيارة. تأكيد التسليم بتوقيع العميل. تحديث المخزون تلقائياً.',
         },
         {
           title: 'سياسة المرتجعات والخصومات',
@@ -262,9 +381,9 @@ const t = {
       collections: 'إجراءات التحصيل',
       collectionsItems: [
         {
-          title: 'مراحل التحصيل',
+          title: 'جدول المتابعة التلقائي',
           content:
-            'المرحلة الأولى (1-30 يوم): تذكير ودي. المرحلة الثانية (31-60 يوم): إنذار رسمي. المرحلة الثالثة (61-90 يوم): إنذار نهائي وتسليم للقانوني.',
+            'قبل 7 أيام: رسالة. قبل 3 أيام: اتصال. يوم الاستحقاق: إشعار. بعد 7 أيام: متابعة. بعد 15 يوم: زيارة. بعد 30 يوم: إنذار. بعد 60 يوم: قانونية.',
         },
         {
           title: 'إجراءات التصعيد',
@@ -272,85 +391,121 @@ const t = {
             'تصعيد تلقائي حسب المدة: فريق التحصيل → المدير → الإدارة التنفيذية → الإدارة القانونية.',
         },
         {
-          title: 'الوعود بالدفع',
+          title: 'الوعود بالدفع والأقساط',
           content:
-            'تسجيل الوعود بالدفع مع التاريخ والمبلغ. متابعة تلقائية عند موعد الوفاء. تحديث حالة الوعود في النظام.',
+            'تسجيل الوعود بالدفع مع التاريخ والمبلغ. جدولة الأقساط تلقائياً. متابعة عند موعد الوفاء.',
         },
         {
-          title: 'موافقة التسوية',
+          title: 'سياسة التسوية',
           content:
-            'التسويات أقل من 10% تتطلب موافقة المدير. تسويات 10-25% تتطلب موافقة المدير المالي. تسويات أكثر من 25% تتطلب موافقة مجلس الإدارة.',
+            'التسويات أقل من 10%: موافقة المدير. 10-25%: موافقة المدير المالي. أكثر من 25%: موافقة مجلس الإدارة.',
         },
         {
           title: 'سياسة الشطب',
           content:
-            'يُشطب الدين بعد استنفاف جميع إجراءات التحصيل والقانوني. يتطلب توثيقاً كاملاً واعتماداً إدارياً متعدد المراحل.',
+            'يُشطب الدين بعد استنفاف جميع إجراءات التحصيل والقانوني. يتطلب توثيقاً كاملاً واعتماداً متعدد المراحل.',
         },
       ],
       credit: 'سياسات الائتمان',
       creditItems: [
         {
-          title: 'معايير تقييم الائتمان',
+          title: 'نموذج طلب الائتمان',
           content:
-            'التحليل المالي: النسب المالية الرئيسية (السيولة، الرفع المالي، الربحية). التحليل غير المالي: سمعة العميل، تاريخ التعامل، القطاع.',
+            'أكثر من 100 حقل: بيانات الشركة، الملاك، الإدارة، الحسابات البنكية، الموردون، العملاء، الإيرادات، المصروفات، الأرباح، الالتزامات، القروض، الضمانات، العقود، الشيكات، الأحكام القضائية.',
         },
         {
-          title: 'نموذج التقييم',
+          title: 'تحليل الذكاء الاصطناعي',
           content:
-            'يستخدم النظام نموذج ذكاء اصطناعي مدمج يأخذ في الاعتبار أكثر من 50 متغيراً. يُحدّث النموذج دورياً بناءً على بيانات الأداء.',
+            'AI يحلل: الميزانية، التدفقات النقدية، الأرباح، الديون، المخاطر، السجل. يعطي درجة (94/100) وتوصية (موافقة / رفض / مراجعة) مع حد ائتماني ومدة.',
         },
         {
-          title: 'مصفوفة سلطة الاعتماد',
+          title: 'لجنة الائتمان',
           content:
-            'المدير: حتى 500,000$. المدير المالي: حتى 2,000,000$. لجنة الائتمان: حتى 10,000,000$. مجلس الإدارة: أكثر من 10,000,000$.',
+            'Workflow: محلل ائتمان → مدير الائتمان → المدير المالي → المدير التنفيذي. كل مرحلة تتطلب موافقة مع تعليقات.',
         },
         {
           title: 'حدود التعرض',
           content:
-            'الحد الأقصى لكل عميل: 15% من رأس المال. الحد الأقصى لكل قطاع: 30% من إجمالي المحفظة. مراجعة الحدود كل 6 أشهر.',
+            'الحد الأقصى لكل عميل: 15% من رأس المال. الحد الأقصى لكل قطاع: 30%. الحد الأقصى لمنطقة: 25%. مراجعة كل 6 أشهر.',
         },
         {
           title: 'متطلبات الضمانات',
           content:
             'ضمانات مالية: كفالة بنكية، خطاب ضمان. ضمانات عقارية: تقييم مستقل، تأمين. ضمانات شخصية: كفالة شخصية.',
         },
-        {
-          title: 'دورية المراجعة',
-          content:
-            'مراجعة شاملة كل 6 أشهر للعملاء الحاليين. مراجعة فورية عند تغير الظروف المالية. تحديث التقييم والحدود سنوياً.',
-        },
       ],
       risk: 'سياسات المخاطر',
       riskItems: [
         {
-          title: 'فئات المخاطر',
+          title: 'Risk Register',
           content:
-            'منخفضة: عملاء بسجل مالي ممتاز وضمانات كافية. متوسطة: عملاء مستقرون مع بعض المخاطر. عالية: عملاء بسجل مالي ضعيف أو قطاع متأثر. حرجة: عملاء متأخرون أو في إفلاس.',
+            'كل خطر له: الوصف، الاحتمال (عالي/متوسط/منخفض)، التأثير (عالي/متوسط/منخفض)، المستوى (حرج/مرتفع/متوسط/منخفض).',
+        },
+        {
+          title: 'Heat Map',
+          content:
+            'مصفوفة 3×3: الاحتمال × التأثير. الحمراء = حرجة، البرتقالية = مرتفعة، الصفراء = متوسطة، الخضراء = منخفضة.',
         },
         {
           title: 'حدود التركيز',
           content:
-            'الحد الأقصى لعميل واحد: 15% من رأس المال. الحد الأقصى لقطاع واحد: 30%. الحد الأقصى لمنطقة جغرافية واحدة: 25%.',
+            'عميل واحد: 15% من رأس المال. قطاع واحد: 30% من المحفظة. منطقة جغرافية: 25%. مراجعة كل 6 أشهر.',
         },
         {
           title: 'اختبار الضغط',
           content:
-            'اختبار سنوي لسيناريوهات مختلفة: انخفاض الإيرادات 20%، ارتفاع أسعار الفائدة 5%، تراجع سوقي 30%. تحليل الأثر على المحفظة الإئتمانية.',
+            'سيناريوهات: انخفاض إيرادات 20%، ارتفاع أسعار الفائدة 5%، تراجع سوقي 30%. تحليل الأثر على المحفظة الإئتمانية.',
         },
         {
-          title: 'امتثال AML/CFT',
+          title: 'الخسائر المتوقعة (IFRS 9)',
           content:
-            'التوافق مع معايير بازل III. فحص القوائم السوداء دورياً. تقارير المعاملات المشبوهة. تعليمات الموظفين السنوية.',
+            'Provision: 1-30 يوم: 1%. 31-60: 5%. 61-90: 20%. 91-180: 50%. 180+: 100%. نماذج احتمالية للتوقعات.',
+        },
+      ],
+      compliance: 'سياسات الامتثال',
+      complianceItems: [
+        {
+          title: 'KYC',
+          content:
+            'التحقق من هوية العميل بالكامل: رقم الهوية، السجل التجاري، الرقم الضريبي، العنوان، جهات الاتصال.',
         },
         {
-          title: 'الخسائر الائتمانية المتوقعة (IFRS 9)',
+          title: 'AML / CFT',
           content:
-            'حساب Provision بناءً على المرحلة الأولى (12 شهر) والمرحلة الثانية (العمر الإئتماني). نماذج احتمالية للتوقعات.',
+            'مكافحة غسل الأموال وتمويل الإرهاب. فحص المعاملات المشبوهة. تقارير المعاملات الكبيرة.',
         },
         {
-          title: 'منهجية Provision',
+          title: 'PEP وقوائم العقوبات',
           content:
-            '1-30 يوم: 1%. 31-60 يوم: 5%. 61-90 يوم: 20%. 91-180 يوم: 50%. أكثر من 180 يوم: 100%.',
+            'فحص الأشخاص المعنيين سياسياً (PEP). فحص دوري لقوائم العقوبات الدولية والمحلية.',
+        },
+        {
+          title: 'العميل الحقيقي والمستفيد النهائي',
+          content:
+            'تحديد الهوية الحقيقية وراء الشخصيات الاعتبارية. التأكد من المستفيد النهائي من كل معاملة.',
+        },
+        {
+          title: 'عناية Due Diligence',
+          content:
+            'due diligence شامل لكل عميل قبل التعامل. مراجعة دورية كل 12 شهراً. مراجعة فورية عند تغير المخاطر.',
+        },
+      ],
+      invoicing: 'سياسات الفواتير',
+      invoicingItems: [
+        {
+          title: 'إنشاء الفاتورة',
+          content:
+            'فاتورة تنشأ من أمر البيع مباشرة. تتضمن المنتجات، الأسعار، الضريبة، الخصومات، الإجمالي.',
+        },
+        {
+          title: 'PDF و QR Code',
+          content:
+            'كل فاتورة تُصدَر بصيغة PDF مع QR Code للتحقق. رابط تحقق إلكتروني.',
+        },
+        {
+          title: 'الإرسال',
+          content:
+            'إرسال بالبريد الإلكتروني مباشرة. إرسال عبر WhatsApp. API لإرسال الفواتير لأي نظام.',
         },
       ],
     },
@@ -375,10 +530,46 @@ const t = {
         'تصدير التقارير بصيغ PDF أو Excel',
       ],
     },
+    integration: {
+      title: 'خريطة التكامل',
+      subtitle: 'تكامل الوحدات وتدفق البيانات بين الأنظمة',
+      flow: {
+        sales: 'المبيعات',
+        collections: 'التحصيل',
+        credit: 'الائتمان',
+        risk: 'المخاطر',
+        ai: 'الذكاء الاصطناعي',
+        dashboard: 'لوحة التحكم',
+        compliance: 'الامتثال',
+      },
+      connections: [
+        { from: 'المبيعات', to: 'الفواتير', desc: 'عرض أسعار → أمر بيع → تسليم → فاتورة (PDF + QR + WhatsApp)' },
+        { from: 'الفواتير', to: 'التحصيل', desc: 'فواتير المبيعات → حساب أيام التأخر → جدول متابعة تلقائي' },
+        { from: 'المبيعات + الائتمان', to: 'المخاطر', desc: 'بيانات المبيعات + طلبات الائتمان → AI risk_score → تصنيف (AAA→CCC)' },
+        { from: 'الائتمان', to: 'دورة كاملة', desc: 'طلب (100+ حقل) → تحليل AI → لجنة → تصويت → حدود + ضمانات' },
+        { from: 'الامتثال', to: 'كل عميل', desc: 'KYC / AML / PEP / عقوبات → شرط مسبق للتعامل → عناية Due Diligence' },
+        { from: 'المبيعات + الائتمان + المخاطر', to: 'لوحة التحكم', desc: 'إحصائيات حية: DSO، Collection Rate، Bad Debt، أعلى 20 عميل' },
+        { from: 'AI Center', to: 'كل الوحدات', desc: '7 خدمات: Credit Scoring, Collection, Risk, Fraud, Document Reader, Analysis, Forecast' },
+      ],
+      status: [
+        { module: 'المبيعات → الفواتير → التحصيل', status: 'مكتمل', icon: 'check' },
+        { module: 'طلب الائتمان + تحليل AI + لجنة', status: 'مكتمل', icon: 'check' },
+        { module: 'حدود الائتمان + الضمانات', status: 'مكتمل', icon: 'check' },
+        { module: 'KYC / AML / PEP / عقوبات', status: 'مكتمل', icon: 'check' },
+        { module: 'Aging Report ومؤشرات DSO', status: 'مكتمل', icon: 'check' },
+        { module: 'Risk Register و Heat Map', status: 'مكتمل', icon: 'check' },
+      ],
+      remaining: [
+        { module: 'إدارة العقود (Contract Management)', status: 'يحتاج تطوير', icon: 'warning' },
+        { module: 'AI Fraud Detection', status: 'يحتاج تطوير', icon: 'warning' },
+        { module: 'AI Document Reader', status: 'يحتاج تطوير', icon: 'warning' },
+        { module: 'تكامل مع SAP / Oracle', status: 'يحتاج تطوير', icon: 'warning' },
+      ],
+    },
   },
   en: {
     helpButton: 'Help Guide',
-    dialogTitle: 'CreditAI Enterprise Guide',
+    dialogTitle: 'CreditAI Enterprise Guide — Order-to-Cash Platform',
     overview: 'Overview',
     modules: 'Modules',
     policies: 'Policies & Procedures',
@@ -386,172 +577,286 @@ const t = {
     systemOverview: 'System Overview',
     platformName: 'CreditAI Enterprise',
     platformDesc:
-      'A comprehensive credit management and collections platform powered by AI. The platform provides tools for customer management, credit applications, collections, compliance, and analytics reports in a secure and reliable environment.',
+      'A comprehensive Order-to-Cash platform matching SAP, Oracle, and Microsoft Dynamics. Covers CRM, Sales, Contracts, Sales Orders, Invoicing, Collections, Receivables, Credit, Risk, Compliance, Legal, Documents (DMS), AI Center, Reports, Workflow, and ERP Integration.',
     keyCapabilities: 'Key Capabilities',
-    cap1: 'Full customer lifecycle management',
-    cap2: 'AI-powered credit decision automation',
-    cap3: 'Collections and cash flow tracking',
-    cap4: 'Regulatory compliance (AML/CFT)',
-    cap5: 'Analytics and management reports',
-    cap6: 'SAP system integration',
-    modulesTitle: 'Module Guide',
+    cap1: 'Full customer lifecycle management (CRM)',
+    cap2: 'Sales automation: Quotation → Order → Delivery → Invoice',
+    cap3: 'Credit application (100+ fields) with AI analysis and committee approval',
+    cap4: 'Smart collections with automated follow-up schedule',
+    cap5: 'Receivables management with Aging Report and DSO metrics',
+    cap6: 'Fraud detection and default prediction with AI',
+    cap7: 'KYC / AML / PEP / Sanctions as prerequisite',
+    cap8: 'Legal case management, court tracking, and enforcement',
+    cap9: 'Integrated Document Management System (DMS)',
+    cap10: 'SAP, Oracle, and Microsoft Dynamics integration',
+    modulesTitle: 'Module Guide — 17 Integrated Modules',
     policiesTitle: 'Global Policies & Procedures',
     quickRefTitle: 'Quick Reference',
     modulesList: [
       {
-        name: 'Users Management',
-        nameEn: 'User Management',
-        icon: 'Users',
-        desc: 'Manage user accounts, roles, and permissions',
+        name: 'Executive Dashboard',
+        nameEn: 'Executive Dashboard',
+        icon: 'BarChart3',
+        desc: 'Interactive dashboard for executives',
         features: [
-          'Create, edit, and delete users',
-          'Manage custom roles and permissions',
-          'Track user activity and audit log',
-          'Multi-factor authentication support',
+          'Total customers, sales, and receivables',
+          'Overdue debts, daily and monthly collections',
+          'DSO, Collection Rate, Bad Debt metrics',
+          'Credit approval vs rejection rates',
+          'Top 20 customers by sales and receivables',
+          'Highest-risk and predicted-default customers (AI)',
+          'Cash flow forecasts and team performance',
         ],
       },
       {
-        name: 'Customer Management',
-        nameEn: 'Customer Management',
+        name: 'Customer Management (CRM)',
+        nameEn: 'Customer Management (CRM)',
         icon: 'Building2',
-        desc: 'Comprehensive customer data and KYC management',
+        desc: 'Comprehensive customer data, contacts, and document management',
         features: [
-          'Register basic and legal customer data',
-          'Manage KYC documents',
-          'Initial risk assessment',
-          'Transaction history tracking',
+          'Customer ID, name, trade name, activity, sector, country, city',
+          'Tax ID, commercial registration, national ID',
+          'Contacts: Director, CFO, Accountant, Procurement Manager',
+          'Documents: Commercial register, tax card, license, incorporation deed',
+          'Budgets and bank statements',
+          'Customer status and creation date',
         ],
       },
       {
-        name: 'Sales',
-        nameEn: 'Sales',
+        name: 'Sales Management',
+        nameEn: 'Sales Management',
         icon: 'ShoppingCart',
-        desc: 'Sales invoice and commercial data management',
+        desc: 'Quotation → Sales Order → Delivery → Invoice',
         features: [
-          'Create and manage sales invoices',
-          'Import data from CSV/Excel files',
+          'Quotations: quote number, products, prices, discounts, tax, validity',
+          'Sales Orders: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed',
+          'Delivery: warehouse, quantity, date, driver, vehicle',
+          'Import data from CSV/Excel',
           'Monthly and annual sales reports',
-          'Manage discounts and returns',
         ],
       },
       {
-        name: 'Credit Decisions',
-        nameEn: 'Credit Decisions',
+        name: 'Contract Management',
+        nameEn: 'Contract Management',
+        icon: 'FileSignature',
+        desc: 'Create, manage, and track contracts',
+        features: [
+          'Create contracts from templates',
+          'Track contract status (active, expired, pending)',
+          'Expiration alerts and renewals',
+          'Link contracts to customers and invoices',
+          'Digital contract archive',
+        ],
+      },
+      {
+        name: 'Sales Orders',
+        nameEn: 'Sales Orders',
+        icon: 'ClipboardList',
+        desc: 'Manage sales orders from issuance to delivery',
+        features: [
+          'Create sales order directly from quotation',
+          'Statuses: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed',
+          'Track delivery and inventory',
+          'Link to previous orders and history',
+          'Open and closed order reports',
+        ],
+      },
+      {
+        name: 'Invoicing',
+        nameEn: 'Invoicing',
+        icon: 'Receipt',
+        desc: 'Create and send electronic invoices',
+        features: [
+          'Create invoice directly from sales order',
+          'Export PDF with QR Code',
+          'Automatic tax calculation',
+          'Send via email and WhatsApp',
+          'API for import/export',
+          'Track invoice status (paid, pending, overdue)',
+        ],
+      },
+      {
+        name: 'Credit Management',
+        nameEn: 'Credit Management',
         icon: 'CreditCard',
-        desc: 'Complete system for credit request, analysis, and approval',
+        desc: 'Comprehensive credit application (100+ fields) with AI analysis and committee',
         features: [
-          'Submit credit requests electronically',
-          'AI-powered credit analysis',
-          'Committee approval workflow',
-          'Credit limits and periodic review',
+          'Application form: company data, ownership, management, bank accounts',
+          'Suppliers, customers, revenue, expenses, profits, obligations',
+          'Loans, guarantees, contracts, checks, legal judgments',
+          'Credit rating (AAA → CCC)',
+          'AI analysis: budget, cash flows, profits, debts, risk, history',
+          'Score 94/100 → Recommendation: Approve / Limit 2M / 90 days',
+          'Committee: Analyst → Credit Manager → CFO → CEO',
         ],
       },
       {
-        name: 'Collections & Cash Flow',
-        nameEn: 'Collections & Cash Flow',
+        name: 'Credit Limits',
+        nameEn: 'Credit Limits',
+        icon: 'Target',
+        desc: 'Manage credit limits per customer',
+        features: [
+          'Current limit, utilized, available',
+          'Temporary limit and temporary increase with expiry',
+          'Limit change history',
+          'Link to pending invoices',
+          'Over-limit alerts',
+        ],
+      },
+      {
+        name: 'Collections',
+        nameEn: 'Collections',
         icon: 'Banknote',
-        desc: 'Track and manage collection and cash flow processes',
+        desc: 'Automated follow-up schedule with smart escalation',
         features: [
-          'Follow up with overdue customers (30/60/90 days)',
-          'Manage payment promises and installments',
-          'Settlement and write-off calculations',
-          'Daily cash flow reports',
+          '7 days before: reminder message',
+          '3 days before: phone call',
+          'Due date: official notification',
+          'After 7 days: intensive follow-up',
+          'After 15 days: field visit',
+          'After 30 days: formal warning',
+          'After 60 days: legal action',
+          'Installments, payment promises, settlements, write-offs',
         ],
       },
       {
-        name: 'Legal Actions',
-        nameEn: 'Legal Actions',
-        icon: 'Scale',
-        desc: 'Manage legal and judicial procedures',
+        name: 'Receivables & Aging',
+        nameEn: 'Receivables & Aging',
+        icon: 'BarChart2',
+        desc: 'Aging Report and collection performance metrics',
+        features: [
+          'Aging Report: 0-30 / 31-60 / 61-90 / 91-120 / 120+ days',
+          'DSO: Average Collection Period',
+          'Collection Rate: actual collection percentage',
+          'Bad Debt: bad debt ratio',
+          'Average Delay: average days overdue',
+          'Daily, weekly, and monthly reports',
+        ],
+      },
+      {
+        name: 'Risk Management',
+        nameEn: 'Risk Management',
+        icon: 'Shield',
+        desc: 'Risk Register with Heat Map and advanced risk analysis',
+        features: [
+          'Risk Register: risk, probability, impact, level',
+          'Heat Map: Critical / High / Medium / Low',
+          'Concentration limits: customer 15%, sector 30%, region 25%',
+          'Stress testing: revenue drop 20%, interest rate +5%',
+          'Expected losses (IFRS 9) with Provision',
+          'Rating AAA → CCC for each customer',
+        ],
+      },
+      {
+        name: 'Compliance',
+        nameEn: 'Compliance',
+        icon: 'ShieldCheck',
+        desc: 'KYC / AML / PEP / Sanctions as prerequisite',
+        features: [
+          'KYC: full customer identity verification',
+          'AML: Anti-Money Laundering and CFT',
+          'PEP: Politically Exposed Persons screening',
+          'Sanctions: automated periodic screening',
+          'Ultimate Beneficial Owner (UBO)',
+          'Electronic signatures',
+          'Due Diligence for every customer',
+        ],
+      },
+      {
+        name: 'Legal Management',
+        nameEn: 'Legal Management',
+        icon: 'Gavel',
+        desc: 'Case management, notices, courts, and enforcement',
         features: [
           'Open and manage legal cases',
-          'Track case stages and documents',
-          'Manage lawyers and legal representatives',
-          'Legal status reports',
+          'Formal and legal notices',
+          'Legal settlements',
+          'Court session tracking',
+          'Enforcement proceedings',
+          'Lawyer and legal representative management',
         ],
       },
       {
-        name: 'Document Management',
-        nameEn: 'Document Management',
+        name: 'Document Management (DMS)',
+        nameEn: 'Document Management (DMS)',
         icon: 'FolderOpen',
-        desc: 'Electronic document and file management system',
+        desc: 'Integrated document management for every customer',
         features: [
-          'Secure document upload and storage',
-          'Document classification by type and customer',
-          'Quick document search',
-          'Document expiry tracking',
-        ],
-      },
-      {
-        name: 'Reports & Analytics',
-        nameEn: 'Reports & Analytics',
-        icon: 'BarChart3',
-        desc: 'Comprehensive analytics reports and interactive dashboards',
-        features: [
-          'Interactive management dashboards',
-          'Customizable exportable reports',
-          'Trend and pattern analysis',
-          'Compliance and risk reports',
-        ],
-      },
-      {
-        name: 'Compliance & Risk',
-        nameEn: 'Compliance & Risk',
-        icon: 'CheckCircle',
-        desc: 'Regulatory compliance and risk assessment management',
-        features: [
-          'Know Your Customer (KYC)',
-          'Anti-Money Laundering (AML/CFT)',
-          'Blacklist and PEP screening',
-          'Compliance case management',
+          'Contracts, invoices, checks, guarantees, correspondence',
+          'Secure upload and encrypted storage',
+          'Classification by type, customer, and status',
+          'Quick search and browsing',
+          'Expiration tracking and alerts',
         ],
       },
       {
         name: 'AI Center',
         nameEn: 'AI Center',
         icon: 'Brain',
-        desc: 'AI models for risk assessment and prediction',
+        desc: 'Smart decision center with 7 integrated AI services',
         features: [
-          'Smart credit scoring models',
-          'Default probability predictions',
-          'Advanced risk analysis',
-          'Continuous model improvement',
+          'AI Credit Scoring: automatic analysis and score 94/100',
+          'AI Collection: suggest best time and method for collection',
+          'AI Risk: predict default before it happens',
+          'AI Fraud Detection: detect suspicious transactions',
+          'AI Document Reader: read contracts and extract data automatically',
+          'AI Financial Analysis: analyze financial statements and highlight KPIs',
+          'AI Forecast: predict cash flows and payment probabilities',
+        ],
+      },
+      {
+        name: 'Reports & Analytics',
+        nameEn: 'Reports & Analytics',
+        icon: 'BarChart3',
+        desc: 'Comprehensive reports and interactive dashboards',
+        features: [
+          'Aging Report and DSO reports',
+          'Sales and receivables reports',
+          'Risk and compliance reports',
+          'Daily and monthly collection reports',
+          'Export PDF / Excel / CSV',
+          'Interactive executive dashboards',
         ],
       },
       {
         name: 'Workflow',
         nameEn: 'Workflow',
         icon: 'GitBranch',
-        desc: 'Workflow and approval process automation',
+        desc: 'Automate workflows and approval processes',
         features: [
-          'Define custom workflows',
-          'Approval stage automation',
-          'Request status tracking',
+          'Define custom workflows per module',
+          'Automate approval stages (analyst → manager → finance → executive)',
+          'Track request status and templates',
           'Automatic notifications and reminders',
+          'Approve / reject with comments',
         ],
       },
       {
-        name: 'SAP Integration',
-        nameEn: 'SAP Integration',
+        name: 'ERP Integration',
+        nameEn: 'ERP Integration',
         icon: 'Database',
-        desc: 'Seamless integration with SAP ERP system',
+        desc: 'Integration with SAP, Oracle, and Microsoft Dynamics',
         features: [
-          'Customer data synchronization',
-          'Sales invoice import',
-          'Debit/credit account updates',
-          'Integration and sync reports',
+          'Customer data synchronization (Business Partners)',
+          'Import sales and purchase invoices',
+          'Debit and credit account updates',
+          'Integration reports and sync logs',
+          'Async sync queue',
+          'Open API for any ERP system',
         ],
       },
       {
-        name: 'System',
-        nameEn: 'System',
+        name: 'Settings & System',
+        nameEn: 'Settings & System',
         icon: 'Settings',
-        desc: 'System settings and general configurations',
+        desc: 'General settings, currency management, and system configuration',
         features: [
           'Currency and exchange rate management',
           'General system settings',
-          'Notification management',
-          'Data backup and recovery',
+          'Notification and preference management',
+          'Menu and module management',
+          'Backup and data recovery',
+          'Audit trail',
         ],
       },
     ],
@@ -559,37 +864,32 @@ const t = {
       sales: 'Sales Policies',
       salesItems: [
         {
-          title: 'Credit Terms',
+          title: 'Quotation',
           content:
-            'Credit terms are determined based on customer risk assessment. Includes time period (30/60/90 days), maximum credit amount, and applicable interest rates.',
+            'Quote number + customer + products + prices + discounts + tax + validity. Quote valid for 30 days. Discounts above 10% require CFO approval.',
         },
         {
-          title: 'Pricing',
+          title: 'Sales Orders',
           content:
-            'Prices are set according to customer categories and transaction volumes. Special discounts are available for strategic customers with management approval.',
+            'Statuses: Draft → Pending → Approved → Released → Delivered → Invoiced → Closed. Each status requires specific approval. Order created directly from quotation.',
         },
         {
-          title: 'Approval Workflow',
+          title: 'Delivery',
           content:
-            'Each invoice passes through stages: Creation → Review → Approval → Issuance. Amounts above the set threshold require credit committee approval.',
+            'Warehouse + quantity + date + driver + vehicle. Delivery confirmed with customer signature. Inventory updated automatically.',
         },
         {
-          title: 'Invoice Management',
+          title: 'Returns & Discounts',
           content:
-            'Track invoices from issuance to full payment. Ability to import invoices from CSV files and export reports.',
-        },
-        {
-          title: 'Returns & Discounts Policy',
-          content:
-            'Returns are accepted with sales management approval. Discounts require prior documentation and CFO approval for large amounts.',
+            'Returns accepted with sales management approval. Discounts require prior documentation and CFO approval for large amounts.',
         },
       ],
       collections: 'Collection Procedures',
       collectionsItems: [
         {
-          title: 'Collection Stages',
+          title: 'Automated Follow-up Schedule',
           content:
-            'Stage 1 (1-30 days): Friendly reminder. Stage 2 (31-60 days): Formal warning. Stage 3 (61-90 days): Final warning and legal handover.',
+            '7 days before: reminder. 3 days before: phone call. Due date: notification. After 7 days: follow-up. After 15 days: field visit. After 30 days: formal notice. After 60 days: legal action.',
         },
         {
           title: 'Escalation Procedures',
@@ -597,85 +897,121 @@ const t = {
             'Automatic escalation by duration: Collection team → Manager → Executive management → Legal department.',
         },
         {
-          title: 'Promises to Pay',
+          title: 'Payment Promises & Installments',
           content:
-            'Record payment promises with date and amount. Automatic follow-up on due date. Update promise status in the system.',
+            'Record payment promises with date and amount. Schedule installments automatically. Follow up on due dates.',
         },
         {
-          title: 'Settlement Approval',
+          title: 'Settlement Policy',
           content:
-            'Settlements under 10% require manager approval. Settlements 10-25% require CFO approval. Settlements over 25% require board approval.',
+            'Settlements below 10%: manager approval. 10-25%: CFO approval. Above 25%: board approval.',
         },
         {
           title: 'Write-off Policy',
           content:
-            'Debt is written off after exhausting all collection and legal measures. Requires complete documentation and multi-level administrative approval.',
+            'Debt written off after exhausting all collection and legal measures. Requires complete documentation and multi-level approval.',
         },
       ],
       credit: 'Credit Policies',
       creditItems: [
         {
-          title: 'Assessment Criteria',
+          title: 'Credit Application Form',
           content:
-            'Financial analysis: Key financial ratios (liquidity, leverage, profitability). Non-financial analysis: Customer reputation, transaction history, sector.',
+            '100+ fields: company data, ownership, management, bank accounts, suppliers, customers, revenue, expenses, profits, obligations, loans, guarantees, contracts, checks, legal judgments.',
         },
         {
-          title: 'Scoring Model',
+          title: 'AI Analysis',
           content:
-            'The system uses an integrated AI model considering over 50 variables. The model is updated periodically based on performance data.',
+            'AI analyzes: budget, cash flows, profits, debts, risk, history. Provides score (94/100) and recommendation (approve/reject/review) with credit limit and duration.',
         },
         {
-          title: 'Approval Authority Matrix',
+          title: 'Credit Committee',
           content:
-            'Manager: Up to $500K. CFO: Up to $2M. Credit Committee: Up to $10M. Board: Over $10M.',
+            'Workflow: Credit analyst → Credit manager → CFO → CEO. Each stage requires approval with comments.',
         },
         {
           title: 'Exposure Limits',
           content:
-            'Maximum per customer: 15% of capital. Maximum per sector: 30% of total portfolio. Limits reviewed every 6 months.',
+            'Maximum per customer: 15% of capital. Maximum per sector: 30% of portfolio. Maximum per region: 25%. Review every 6 months.',
         },
         {
           title: 'Collateral Requirements',
           content:
-            'Financial guarantees: Bank guarantees, letters of credit. Real estate guarantees: Independent appraisal, insurance. Personal guarantees: Personal surety.',
-        },
-        {
-          title: 'Review Frequency',
-          content:
-            'Comprehensive review every 6 months for existing customers. Immediate review upon change in financial circumstances. Annual limit updates.',
+            'Financial: bank guarantee, letter of guarantee. Real estate: independent appraisal, insurance. Personal: personal guarantee.',
         },
       ],
       risk: 'Risk Policies',
       riskItems: [
         {
-          title: 'Risk Categories',
+          title: 'Risk Register',
           content:
-            'Low: Customers with excellent financial record and adequate guarantees. Medium: Stable customers with some risks. High: Customers with weak financial record or affected sector. Critical: Defaulting or bankrupt customers.',
+            'Each risk has: description, probability (high/medium/low), impact (high/medium/low), level (critical/high/medium/low).',
+        },
+        {
+          title: 'Heat Map',
+          content:
+            '3×3 matrix: Probability × Impact. Red = Critical, Orange = High, Yellow = Medium, Green = Low.',
         },
         {
           title: 'Concentration Limits',
           content:
-            'Maximum per customer: 15% of capital. Maximum per sector: 30%. Maximum per geographic region: 25%.',
+            'Single customer: 15% of capital. Single sector: 30% of portfolio. Single region: 25%. Review every 6 months.',
         },
         {
           title: 'Stress Testing',
           content:
-            'Annual testing of various scenarios: 20% revenue decline, 5% interest rate increase, 30% market downturn. Impact analysis on credit portfolio.',
+            'Scenarios: revenue drop 20%, interest rate increase 5%, market decline 30%. Analyze impact on credit portfolio.',
         },
         {
-          title: 'AML/CFT Compliance',
+          title: 'Expected Losses (IFRS 9)',
           content:
-            'Basel III standards compliance. Periodic blacklist screening. Suspicious transaction reports. Annual employee training.',
+            'Provision: 1-30 days: 1%. 31-60: 5%. 61-90: 20%. 91-180: 50%. 180+: 100%. Probabilistic models for forecasts.',
+        },
+      ],
+      compliance: 'Compliance Policies',
+      complianceItems: [
+        {
+          title: 'KYC',
+          content:
+            'Full customer identity verification: national ID, commercial registration, tax ID, address, contacts.',
         },
         {
-          title: 'IFRS 9 Expected Credit Loss',
+          title: 'AML / CFT',
           content:
-            'Provision calculation based on Stage 1 (12 months) and Stage 2 (lifetime). Probabilistic models for forecasts.',
+            'Anti-money laundering and counter-terrorism financing. Suspicious transaction reports. Large transaction reports.',
         },
         {
-          title: 'Provision Methodology',
+          title: 'PEP & Sanctions',
           content:
-            '1-30 days: 1%. 31-60 days: 5%. 61-90 days: 20%. 91-180 days: 50%. Over 180 days: 100%.',
+            'Politically Exposed Persons screening. Periodic screening against international and local sanctions lists.',
+        },
+        {
+          title: 'Ultimate Beneficial Owner',
+          content:
+            'Identify the real person behind legal entities. Verify the ultimate beneficiary of every transaction.',
+        },
+        {
+          title: 'Due Diligence',
+          content:
+            'Comprehensive due diligence for every customer before engagement. Periodic review every 12 months. Immediate review on risk change.',
+        },
+      ],
+      invoicing: 'Invoicing Policies',
+      invoicingItems: [
+        {
+          title: 'Invoice Creation',
+          content:
+            'Invoice created directly from sales order. Includes products, prices, tax, discounts, total.',
+        },
+        {
+          title: 'PDF & QR Code',
+          content:
+            'Every invoice exported as PDF with QR Code for verification. Electronic verification link.',
+        },
+        {
+          title: 'Sending',
+          content:
+            'Send via email directly. Send via WhatsApp. API for sending invoices to any system.',
         },
       ],
     },
@@ -686,7 +1022,7 @@ const t = {
         { keys: 'Ctrl + N', action: 'Create new record' },
         { keys: 'Ctrl + S', action: 'Save changes' },
         { keys: 'Ctrl + E', action: 'Export data' },
-        { keys: 'Esc', action: 'Close modal' },
+        { keys: 'Esc', action: 'Close popup' },
         { keys: '?', action: 'Open help guide' },
       ],
     },
@@ -698,6 +1034,42 @@ const t = {
         'Click "?" at any time to open this guide',
         'Use filters to narrow down displayed data',
         'Export reports in PDF or Excel format',
+      ],
+    },
+    integration: {
+      title: 'Integration Map',
+      subtitle: 'Unit integration and data flow between systems',
+      flow: {
+        sales: 'Sales',
+        collections: 'Collections',
+        credit: 'Credit',
+        risk: 'Risk',
+        ai: 'AI',
+        dashboard: 'Dashboard',
+        compliance: 'Compliance',
+      },
+      connections: [
+        { from: 'Sales', to: 'Invoicing', desc: 'Quotation → Order → Delivery → Invoice (PDF + QR + WhatsApp)' },
+        { from: 'Invoicing', to: 'Collections', desc: 'Sales invoices → Overdue days → Automated follow-up schedule' },
+        { from: 'Sales + Credit', to: 'Risk', desc: 'Sales data + credit requests → AI risk_score → Rating (AAA→CCC)' },
+        { from: 'Credit', to: 'Full Cycle', desc: 'Application (100+ fields) → AI analysis → Committee → Vote → Limits + Collateral' },
+        { from: 'Compliance', to: 'Every Customer', desc: 'KYC / AML / PEP / Sanctions → Prerequisite → Due Diligence' },
+        { from: 'Sales + Credit + Risk', to: 'Dashboard', desc: 'Live stats: DSO, Collection Rate, Bad Debt, Top 20 customers' },
+        { from: 'AI Center', to: 'All Modules', desc: '7 services: Credit Scoring, Collection, Risk, Fraud, Document Reader, Analysis, Forecast' },
+      ],
+      status: [
+        { module: 'Sales → Invoicing → Collections', status: 'Completed', icon: 'check' },
+        { module: 'Credit Application + AI + Committee', status: 'Completed', icon: 'check' },
+        { module: 'Credit Limits + Collateral', status: 'Completed', icon: 'check' },
+        { module: 'KYC / AML / PEP / Sanctions', status: 'Completed', icon: 'check' },
+        { module: 'Aging Report & DSO Metrics', status: 'Completed', icon: 'check' },
+        { module: 'Risk Register & Heat Map', status: 'Completed', icon: 'check' },
+      ],
+      remaining: [
+        { module: 'Contract Management', status: 'Needs Development', icon: 'warning' },
+        { module: 'AI Fraud Detection', status: 'Needs Development', icon: 'warning' },
+        { module: 'AI Document Reader', status: 'Needs Development', icon: 'warning' },
+        { module: 'SAP / Oracle Integration', status: 'Needs Development', icon: 'warning' },
       ],
     },
   },
@@ -721,36 +1093,34 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Settings,
   DollarSign,
   FileText,
+  FileSignature,
+  ClipboardList,
+  Truck,
+  Receipt,
+  Gavel,
+  Search,
+  MessageSquare,
+  AlertOctagon,
+  Eye,
+  FileBarChart,
+  BarChart2,
 };
 
 export function HelpGuide() {
-  const { locale, isRtl } = useLanguage();
+  const { locale } = useLanguage();
   const [open, setOpen] = useState(false);
-  const content = t[locale];
+  const c = content[locale] || content.en;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label={content.helpButton}>
-          <HelpCircle className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <HelpCircle className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={cn(
-          'flex h-[90vh] max-h-[90vh] w-full flex-col p-0 sm:max-w-2xl md:max-w-3xl lg:max-w-4xl',
-          isRtl && 'font-arabic'
-        )}
-      >
-        <DialogHeader className="flex flex-row items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <BookOpen className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <DialogTitle className="text-lg">{content.dialogTitle}</DialogTitle>
-              <p className="text-xs text-muted-foreground">{content.platformName}</p>
-            </div>
-          </div>
+      <DialogContent className="flex h-[85vh] max-w-4xl flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle className="text-lg">{c.dialogTitle}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex flex-1 flex-col overflow-hidden">
@@ -761,28 +1131,28 @@ export function HelpGuide() {
                 className="rounded-none border-b-2 border-transparent px-4 py-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <BookOpen className="mr-2 h-4 w-4" />
-                {content.overview}
+                {c.overview}
               </TabsTrigger>
               <TabsTrigger
                 value="modules"
                 className="rounded-none border-b-2 border-transparent px-4 py-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <Layers className="mr-2 h-4 w-4" />
-                {content.modules}
+                {c.modules}
               </TabsTrigger>
               <TabsTrigger
                 value="policies"
                 className="rounded-none border-b-2 border-transparent px-4 py-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <BookMarked className="mr-2 h-4 w-4" />
-                {content.policies}
+                {c.policies}
               </TabsTrigger>
               <TabsTrigger
                 value="quickref"
                 className="rounded-none border-b-2 border-transparent px-4 py-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <Keyboard className="mr-2 h-4 w-4" />
-                {content.quickRef}
+                {c.quickRef}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -797,19 +1167,19 @@ export function HelpGuide() {
                       <Zap className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold">{content.platformName}</h3>
-                      <p className="text-sm text-muted-foreground">{content.systemOverview}</p>
+                      <h3 className="text-xl font-bold">{c.platformName}</h3>
+                      <p className="text-sm text-muted-foreground">{c.systemOverview}</p>
                     </div>
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {content.platformDesc}
+                    {c.platformDesc}
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-semibold">{content.keyCapabilities}</h4>
+                  <h4 className="mb-3 text-sm font-semibold">{c.keyCapabilities}</h4>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {[content.cap1, content.cap2, content.cap3, content.cap4, content.cap5, content.cap6].map(
+                    {[c.cap1, c.cap2, c.cap3, c.cap4, c.cap5, c.cap6, c.cap7, c.cap8, c.cap9, c.cap10].map(
                       (cap, i) => (
                         <div
                           key={i}
@@ -828,7 +1198,7 @@ export function HelpGuide() {
             {/* MODULES TAB */}
             <TabsContent value="modules" className="mt-0 p-6">
               <Accordion type="multiple" className="space-y-2">
-                {content.modulesList.map((mod, i) => {
+                {c.modulesList.map((mod, i) => {
                   const Icon = iconMap[mod.icon] || FileText;
                   return (
                     <AccordionItem key={i} value={`module-${i}`} className="rounded-lg border px-4">
@@ -866,11 +1236,35 @@ export function HelpGuide() {
                 <div>
                   <div className="mb-3 flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.policiesContent.sales}</h4>
+                    <h4 className="font-semibold">{c.policiesContent.sales}</h4>
                   </div>
                   <Accordion type="multiple" className="space-y-1">
-                    {content.policiesContent.salesItems.map((item, i) => (
+                    {c.policiesContent.salesItems.map((item, i) => (
                       <AccordionItem key={i} value={`sales-${i}`} className="rounded-md border px-4">
+                        <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
+                          {item.title}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <p className="pb-2 text-sm leading-relaxed text-muted-foreground">
+                            {item.content}
+                          </p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+
+                <div className="h-px bg-border" />
+
+                {/* Invoicing Policies */}
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">{c.policiesContent.invoicing}</h4>
+                  </div>
+                  <Accordion type="multiple" className="space-y-1">
+                    {c.policiesContent.invoicingItems.map((item, i) => (
+                      <AccordionItem key={i} value={`invoicing-${i}`} className="rounded-md border px-4">
                         <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
                           {item.title}
                         </AccordionTrigger>
@@ -890,10 +1284,10 @@ export function HelpGuide() {
                 <div>
                   <div className="mb-3 flex items-center gap-2">
                     <Banknote className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.policiesContent.collections}</h4>
+                    <h4 className="font-semibold">{c.policiesContent.collections}</h4>
                   </div>
                   <Accordion type="multiple" className="space-y-1">
-                    {content.policiesContent.collectionsItems.map((item, i) => (
+                    {c.policiesContent.collectionsItems.map((item, i) => (
                       <AccordionItem key={i} value={`collections-${i}`} className="rounded-md border px-4">
                         <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
                           {item.title}
@@ -914,10 +1308,10 @@ export function HelpGuide() {
                 <div>
                   <div className="mb-3 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.policiesContent.credit}</h4>
+                    <h4 className="font-semibold">{c.policiesContent.credit}</h4>
                   </div>
                   <Accordion type="multiple" className="space-y-1">
-                    {content.policiesContent.creditItems.map((item, i) => (
+                    {c.policiesContent.creditItems.map((item, i) => (
                       <AccordionItem key={i} value={`credit-${i}`} className="rounded-md border px-4">
                         <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
                           {item.title}
@@ -938,11 +1332,35 @@ export function HelpGuide() {
                 <div>
                   <div className="mb-3 flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.policiesContent.risk}</h4>
+                    <h4 className="font-semibold">{c.policiesContent.risk}</h4>
                   </div>
                   <Accordion type="multiple" className="space-y-1">
-                    {content.policiesContent.riskItems.map((item, i) => (
+                    {c.policiesContent.riskItems.map((item, i) => (
                       <AccordionItem key={i} value={`risk-${i}`} className="rounded-md border px-4">
+                        <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
+                          {item.title}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <p className="pb-2 text-sm leading-relaxed text-muted-foreground">
+                            {item.content}
+                          </p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+
+                <div className="h-px bg-border" />
+
+                {/* Compliance Policies */}
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">{c.policiesContent.compliance}</h4>
+                  </div>
+                  <Accordion type="multiple" className="space-y-1">
+                    {c.policiesContent.complianceItems.map((item, i) => (
+                      <AccordionItem key={i} value={`compliance-${i}`} className="rounded-md border px-4">
                         <AccordionTrigger className="py-2.5 text-sm font-medium hover:no-underline">
                           {item.title}
                         </AccordionTrigger>
@@ -965,10 +1383,10 @@ export function HelpGuide() {
                 <div className="rounded-lg border bg-card p-5">
                   <div className="mb-4 flex items-center gap-2">
                     <Keyboard className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.shortcuts.title}</h4>
+                    <h4 className="font-semibold">{c.shortcuts.title}</h4>
                   </div>
                   <div className="space-y-2">
-                    {content.shortcuts.items.map((item, i) => (
+                    {c.shortcuts.items.map((item, i) => (
                       <div key={i} className="flex items-center justify-between rounded-md border p-3">
                         <span className="text-sm text-muted-foreground">{item.action}</span>
                         <Badge variant="secondary" className="font-mono text-xs">
@@ -983,16 +1401,90 @@ export function HelpGuide() {
                 <div className="rounded-lg border bg-card p-5">
                   <div className="mb-4 flex items-center gap-2">
                     <Target className="h-5 w-5 text-primary" />
-                    <h4 className="font-semibold">{content.navTips.title}</h4>
+                    <h4 className="font-semibold">{c.navTips.title}</h4>
                   </div>
                   <ul className="space-y-2">
-                    {content.navTips.items.map((tip, i) => (
+                    {c.navTips.items.map((tip, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <TrendingUp className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
                         <span>{tip}</span>
                       </li>
                     ))}
                   </ul>
+                </div>
+
+                {/* Integration Map */}
+                <div className="rounded-lg border bg-card p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <GitBranch className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">{c.integration.title}</h4>
+                  </div>
+                  <p className="mb-4 text-sm text-muted-foreground">{c.integration.subtitle}</p>
+
+                  {/* Flow Diagram */}
+                  <div className="mb-5 flex flex-wrap items-center justify-center gap-2 rounded-lg bg-muted/50 p-4">
+                    {[
+                      c.integration.flow.sales,
+                      c.integration.flow.collections,
+                      c.integration.flow.credit,
+                      c.integration.flow.risk,
+                    ].map((step, i, arr) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium">{step}</div>
+                        {i < arr.length - 1 && <ArrowRight className="h-4 w-4 text-primary" />}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Connections */}
+                  <div className="mb-4">
+                    <h5 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                      {locale === 'ar' ? 'التكاملات النشطة' : 'Active Integrations'}
+                    </h5>
+                    <div className="space-y-2">
+                      {c.integration.connections.map((conn, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-md border p-3 text-sm">
+                          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                          <div>
+                            <span className="font-medium">{conn.from} → {conn.to}</span>
+                            <p className="text-xs text-muted-foreground">{conn.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="mb-4">
+                    <h5 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                      {locale === 'ar' ? 'حالة الوحدات' : 'Module Status'}
+                    </h5>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {c.integration.status.map((s, i) => (
+                        <div key={i} className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-2.5 text-sm dark:border-green-900 dark:bg-green-950">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="font-medium">{s.module}</span>
+                          <Badge variant="outline" className="ms-auto text-xs text-green-600">{s.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Remaining */}
+                  <div>
+                    <h5 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                      {locale === 'ar' ? 'يحتاج تطوير' : 'Needs Development'}
+                    </h5>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {c.integration.remaining.map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-sm dark:border-amber-900 dark:bg-amber-950">
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          <span className="font-medium">{r.module}</span>
+                          <Badge variant="outline" className="ms-auto text-xs text-amber-600">{r.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>

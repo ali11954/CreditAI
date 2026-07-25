@@ -1,7 +1,5 @@
 from typing import AsyncGenerator
 
-from sqlalchemy import event
-from sqlalchemy.dialects.postgresql.psycopg import PGDialect_psycopg
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -11,22 +9,10 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
 
-# ============================================================
-# CRITICAL: Disable server-side prepared statements
-# Supabase pgbouncer (transaction mode) drops server-side state
-# between transactions, causing DuplicatePreparedStatement errors.
-# We patch the dialect's connect() to force prepare_threshold=0.
-# ============================================================
-_original_dialect_connect = PGDialect_psycopg.connect
 
-
-def _patched_connect(self, *cargs, **cparams):
-    cparams = dict(cparams)
-    cparams["prepare_threshold"] = 0
-    return _original_dialect_connect(self, *cargs, **cparams)
-
-
-PGDialect_psycopg.connect = _patched_connect  # type: ignore
+connect_args = {}
+if 'pooler.supabase.com' in settings.async_database_url or 'supabase.co' in settings.async_database_url:
+    connect_args["prepare_threshold"] = 0
 
 
 engine = create_async_engine(
@@ -36,13 +22,8 @@ engine = create_async_engine(
     pool_recycle=300,
     pool_size=5,
     max_overflow=10,
+    connect_args=connect_args,
 )
-
-
-@event.listens_for(engine.pool, "checkout")
-def _on_checkout(conn, rec, proxy):
-    if hasattr(conn, "prepare_threshold"):
-        conn.prepare_threshold = 0
 
 
 async_session_factory = async_sessionmaker(

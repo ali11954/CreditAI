@@ -58,7 +58,10 @@ class Settings(BaseSettings):
         url = re.sub(r'[?&]sslmode=disable', '', url)
         if 'sslmode=' not in url:
             sep = '&' if '?' in url else '?'
-            url = f"{url}{sep}sslmode=require"
+            if 'localhost' in url or '127.0.0.1' in url:
+                url = f"{url}{sep}sslmode=disable"
+            else:
+                url = f"{url}{sep}sslmode=require"
 
         return url
 
