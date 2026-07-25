@@ -21,6 +21,7 @@ class Invoice(Base):
     status = Column(String(50), default="pending", nullable=False)
     aging_days = Column(Integer, default=0, nullable=False)
     sales_order_id = Column(String(100), nullable=True)
+    sales_invoice_id = Column(UUID(as_uuid=True), ForeignKey("sales_invoices.id"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

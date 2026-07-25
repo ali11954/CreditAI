@@ -84,7 +84,18 @@ async def list_executions(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("reports:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.report import ReportExecution
+    from sqlalchemy import select, func
+    query = select(ReportExecution).where(ReportExecution.is_active == True)
+    count_query = select(func.count(ReportExecution.id)).where(ReportExecution.is_active == True)
+    if template_id:
+        query = query.where(ReportExecution.template_id == template_id)
+        count_query = count_query.where(ReportExecution.template_id == template_id)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(ReportExecution.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    executions = [dict(row._mapping) for row in result.all()]
+    return {"items": executions, "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/aging")

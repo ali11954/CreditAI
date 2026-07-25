@@ -76,7 +76,15 @@ async def get_preferences(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user)
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.notification import NotificationPreference
+    from sqlalchemy import select
+    result = await db.execute(
+        select(NotificationPreference)
+        .where(NotificationPreference.user_id == current_user.id)
+        .where(NotificationPreference.is_active == True)
+    )
+    prefs = [dict(row._mapping) for row in result.all()]
+    return {"items": prefs}
 
 
 @router.put("/preferences")
@@ -85,4 +93,28 @@ async def update_preferences(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user)
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.notification import NotificationPreference
+    from sqlalchemy import select
+    for pref_data in preferences:
+        notif_type = pref_data.get("notification_type")
+        channel = pref_data.get("channel")
+        is_enabled = pref_data.get("is_enabled", True)
+        result = await db.execute(
+            select(NotificationPreference)
+            .where(NotificationPreference.user_id == current_user.id)
+            .where(NotificationPreference.notification_type == notif_type)
+            .where(NotificationPreference.channel == channel)
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            existing.is_enabled = is_enabled
+        else:
+            pref = NotificationPreference(
+                user_id=current_user.id,
+                notification_type=notif_type,
+                channel=channel,
+                is_enabled=is_enabled
+            )
+            db.add(pref)
+    await db.commit()
+    return {"message": "Preferences updated successfully"}

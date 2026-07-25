@@ -96,7 +96,21 @@ async def list_folders(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("documents:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.document import DocumentFolder
+    from sqlalchemy import select, func
+    query = select(DocumentFolder).where(DocumentFolder.is_active == True)
+    count_query = select(func.count(DocumentFolder.id)).where(DocumentFolder.is_active == True)
+    if parent_id:
+        query = query.where(DocumentFolder.parent_id == parent_id)
+        count_query = count_query.where(DocumentFolder.parent_id == parent_id)
+    else:
+        query = query.where(DocumentFolder.parent_id == None)
+        count_query = count_query.where(DocumentFolder.parent_id == None)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(DocumentFolder.name).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    folders = [dict(row._mapping) for row in result.all()]
+    return {"items": folders, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/folders/", status_code=status.HTTP_201_CREATED)
@@ -105,4 +119,9 @@ async def create_folder(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("documents:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.document import DocumentFolder
+    folder = DocumentFolder(**folder_data, created_by=current_user.id)
+    db.add(folder)
+    await db.commit()
+    await db.refresh(folder)
+    return dict(folder._mapping)

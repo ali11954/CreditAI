@@ -39,7 +39,15 @@ async def list_business_partners(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("sap:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.sap import SAPBusinessPartner
+    from sqlalchemy import select, func
+    query = select(SAPBusinessPartner).where(SAPBusinessPartner.is_active == True)
+    count_query = select(func.count(SAPBusinessPartner.id)).where(SAPBusinessPartner.is_active == True)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(SAPBusinessPartner.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    partners = [dict(row._mapping) for row in result.all()]
+    return {"items": partners, "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/invoices")
@@ -49,7 +57,15 @@ async def list_sap_invoices(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("sap:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.sap import SAPInvoice
+    from sqlalchemy import select, func
+    query = select(SAPInvoice).where(SAPInvoice.is_active == True)
+    count_query = select(func.count(SAPInvoice.id)).where(SAPInvoice.is_active == True)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(SAPInvoice.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    invoices = [dict(row._mapping) for row in result.all()]
+    return {"items": invoices, "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/sync-logs")
@@ -60,7 +76,18 @@ async def list_sync_logs(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("sap:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.sap import SAPSyncLog
+    from sqlalchemy import select, func
+    query = select(SAPSyncLog).where(SAPSyncLog.is_active == True)
+    count_query = select(func.count(SAPSyncLog.id)).where(SAPSyncLog.is_active == True)
+    if entity_type:
+        query = query.where(SAPSyncLog.entity_type == entity_type)
+        count_query = count_query.where(SAPSyncLog.entity_type == entity_type)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(SAPSyncLog.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    logs = [dict(row._mapping) for row in result.all()]
+    return {"items": logs, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/queue")

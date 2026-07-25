@@ -61,7 +61,18 @@ async def list_prompts(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("ai:read"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.ai import AIPrompt
+    from sqlalchemy import select, func
+    query = select(AIPrompt).where(AIPrompt.is_active == True)
+    count_query = select(func.count(AIPrompt.id)).where(AIPrompt.is_active == True)
+    if module:
+        query = query.where(AIPrompt.module == module)
+        count_query = count_query.where(AIPrompt.module == module)
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(AIPrompt.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    prompts = [dict(row._mapping) for row in result.all()]
+    return {"items": prompts, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/prompts", status_code=status.HTTP_201_CREATED)
@@ -70,7 +81,12 @@ async def create_prompt(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("ai:create"))
 ):
-    raise HTTPException(status_code=501, detail="Not implemented")
+    from app.models.ai import AIPrompt
+    prompt = AIPrompt(**prompt_data, created_by=current_user.id)
+    db.add(prompt)
+    await db.commit()
+    await db.refresh(prompt)
+    return dict(prompt._mapping)
 
 
 @router.post("/chat")
